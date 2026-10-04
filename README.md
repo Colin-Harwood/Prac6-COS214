@@ -30,6 +30,16 @@ every task has a status which can be pending, inProgress, Failed, Cancelled, Tim
 - 'FailedStatus' (concreteState): an error occurred while the task was running, and failed.
 - 'CompletedStatus' (concreteState): the task has successfully completed, or successfully been cancelled.
 
+# State (priority)
+## Explanation
+Every task has a priority level that dictates how it is routed and escalated. This allows the task to shift its behavior based on urgency.
+
+## Classes 
+- 'PriorityState' (State): is the priority interface defining standard actions like checking priority and escalating.
+- 'LowPriority' (concreteState): the task is of low urgency.
+- 'MediumPriority' (concreteState): the task follows standard assignment and routing rules.
+- 'HighPriority' (concreteState): the task bypasses standard assignment rules and instantly escalates.
+
 # Builder
 ## Explanation 
   The Builder class is an interface that the director uses to actually construct the task objects.
