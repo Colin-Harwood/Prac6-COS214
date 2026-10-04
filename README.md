@@ -16,3 +16,28 @@ Practical 6 for COS214
 - 'Command', acts as the interface
 - 'taskCommand' does work of the class
 - 'ConditionalTaskCommand' can be skipped over and the request be passed to the next element in the chain of responsiblity
+
+# State (status)
+## Explanation 
+every task has a status which can be pending, inProgress, Failed, Cancelled, TimedOut or Completed.
+
+## Classes
+- 'Status' (State:, is the status interface
+- 'PendingStatus' (concreteState): the task has been made, but not started to do anything yet
+- 'inProgressStatus' (concreteState): task is executing/running/doing something and progressing.
+- 'TimedOutStatus' (concreteState): the time limit allocated for the task has been reached.
+- 'CancelledStatus' (concreteState): the task was cancelled.
+- 'FailedStatus' (concreteState): an error occurred while the task was running, and failed.
+- 'CompletedStatus' (concreteState): the task has successfully completed, or successfully been cancelled.
+
+# Builder
+## Explanation 
+  The Builder class is an interface that the director uses to actually construct the task objects.
+
+## Classes
+- 'Director' (Director): constructs a Task using the Builder interface.
+- 'Builder' (Builder): interface for creating parts of a task.
+- 'TaskBuilder' (ConcreteBuilder): constructs and puts together parts of the Task and provides a way to get the Task object.
+
+
+
