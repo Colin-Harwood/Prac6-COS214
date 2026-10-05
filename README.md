@@ -68,5 +68,25 @@ Every task has a priority level that dictates how it is routed and escalated. Th
 - `storeSnapshot(snapshot:Snapshot*) : void` pushes a snapshot object onto its stack
 - `retreiveSnapshot() : Snapshot*` returns the top element of the command's stack and pops it from the stack.
 
+# Observer
+## Explanation
+- The Observer and the Composite are combined.
+- The observer is used to monitor the current task node (Composite) and ensure that it is still currently running.
+- If it detects a hang it alerts the necessary classes to fix/move on from this.
 
+## Participants
+- **Subject:** This notifies the observer of the updated state.
+- **ConcreteSubject:** Actually sends the updates of it's state to the observer. Sends everytime it's status changes.
+- **Observer:** Just has the abstract update.
+- **Subject:** Keeps the leaf's status and implements timer functionality to update if the leaf takes too long.
 
+# Iterator
+## Explanation
+In order to make the traversing of the combined chain of responsibility and composite be easier the iterator is used.
+Iterator also has 3 types to go over all priorities, medium and high only (medium), and high priority only.
+
+## Participants
+- **Iterator:** Just implements basic interface for the iterator.
+- **ConcreteIterator:** Three kinds, to go over the different priorities.
+- **Aggregate:** This is the Composite/Chain of Responsibility data structure that the iterator will traverse. **Will do dfs.**
+- **ConcreteAgregate:** The leaves that will be iterated over.
