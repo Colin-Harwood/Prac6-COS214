@@ -49,5 +49,24 @@ Every task has a priority level that dictates how it is routed and escalated. Th
 - 'Builder' (Builder): interface for creating parts of a task.
 - 'TaskBuilder' (ConcreteBuilder): constructs and puts together parts of the Task and provides a way to get the Task object.
 
+# Memento
+## Explanation:
+- The Memento pattern and Command pattern are combined
+- The memento pattern is used to create snapshots of a task for logging (to print what the current task looks like) and for undo functionality. its records the state of the a task.
+- The ConcreteCommands ask as the caretakers to implement the undo using the memento in their own way
+- The Originator/Task/Handler is a friend class of the snapshot class creating a wide interface between each other, however the snapshot provides a narrow interface with the caretaker ensuring encapsulation is not broken
+
+## Classes/Participants:
+- **Originator/Receiver:** this has the state that needs to be captured by the **Snapshot** class.
+- **Snapshot(memento) :** It captures the state of the originator, has a wide interface with the originator via friend classing and a narrow interface with the **concreteCommand/caretaker.**
+- **ConcreteCommands/caretaker**: It links an action to the **originator/receiver**. When it executes it gets a memento from the originator and stores it in its stack. If an undo action is needed it pops the stack, retrieves the snapshot and passes it back to the **originator/receiver**
+## Functions:
+- `createSnapshot():Snapshot*` creates the instance of a snapshot object
+- `setSnapshot(snapshot : Snapshot *) : void` sets all the relevant attributes of originator to the attributes of the snapshot (useful for undo functionality)
+- `getSnapshot() : Snapshot* ` returns the snapshot object
+- `setSnapshot(taskName : string, id : string, status : Status, timer : int, user : string, priority : PriorityState) : void` sets the attributes/state of the originator to the state of the snapshot.
+- `storeSnapshot(snapshot:Snapshot*) : void` pushes a snapshot object onto its stack
+- `retreiveSnapshot() : Snapshot*` returns the top element of the command's stack and pops it from the stack.
+
 
 
