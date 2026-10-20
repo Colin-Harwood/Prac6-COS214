@@ -100,10 +100,9 @@ Each node has a certain list of responsibilities/jobs (just strings) and each ta
 	- Component:
 	- Composite:
 	- Leaf:
-5. **Memento:** snapshots of a task
-	- Caretaker:
-	- Memento:
-	- Originator:
+5. **Prototype:** snapshots of a task and is used to in the Command for Undo and logging functionality
+	- Prototype:
+	- ConcretePrototype:
 6. **Command:** logging and retrieval
 	- Invoker:
 	- Receiver:
