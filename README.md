@@ -100,9 +100,10 @@ Each node has a certain list of responsibilities/jobs (just strings) and each ta
 	- Component:
 	- Composite:
 	- Leaf:
-5. **Prototype:** snapshots of a task and is used to in the Command for Undo and logging functionality
-	- Prototype:
-	- ConcretePrototype:
+5. **Prototype:** Creates snapshots of a task so they can be used in the rollback system and are integrated with the task execution subsystem for log reports and undo functionality
+	- Prototype: Task
+	- ConcretePrototype: SimpleTask and TaskGroup
+	- PrototypeManager: TaskSnapshotManager
 6. **Command:** logging and retrieval
 	- Invoker: Handler
 	- Receiver: SimpleTask & TaskGroup
