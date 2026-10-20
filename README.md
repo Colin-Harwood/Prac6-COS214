@@ -104,10 +104,10 @@ Each node has a certain list of responsibilities/jobs (just strings) and each ta
 	- Prototype:
 	- ConcretePrototype:
 6. **Command:** logging and retrieval
-	- Invoker:
-	- Receiver:
-	- Command:
-	- ConcreteCommand:
+	- Invoker: Handler
+	- Receiver: SimpleTask & TaskGroup
+	- Command: Command
+	- ConcreteCommand: LogCommand & ExecuteCommand
 7. **Chain of Responsibility:** progresses the workflow
 	- Handler:
 	- ConcreteHandler:
