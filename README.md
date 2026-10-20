@@ -1,12 +1,11 @@
 # Prac6-COS214
 Practical 6 for COS214
 
-# Composite + Chain of Responsibility
+# Composite
 ## Classes
-- 'Workflow' (Client): builds the chain and runs it.
-- 'Task' (Handler and Component): abstract base class with the next link, a name.
-- 'SubTask' (Concrete Handler and Leaf): one unit of work with a duration.
-- 'TaskGroup' (Concrete Handler and Composite): holds child tasks and runs them in order.
+- Composite design pattern represents induvidual tasks that need to be completed and handeled by the workflow system.
+# Chain of Responsibility
+- Recieve the taks from the composite and pass it down the chain hoping there is a handler that can handle the task.
 
 # Command
 ## Explanation 
