@@ -84,9 +84,9 @@ Each node has a certain list of responsibilities/jobs (just strings) and each ta
 **Please list the participants and core functions related to the pattern, please have function description **
 
 1. **Builder:** used to create the project:
-	- Builder:
-	- ConcreteBuilder:
-	- Director:
+	- Builder: Builder
+	- ConcreteBuilder: SimpleTaskBuilder, TaskGroupBuilder
+	- Director: Director
 2. **Iterator:** used to traverse the task and execute functions. different types of iterators based on what the department the task is in (external)
 	- Aggregate:
 	- ConcreteAggregate:
