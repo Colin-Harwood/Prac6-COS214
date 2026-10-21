@@ -88,10 +88,10 @@ Each node has a certain list of responsibilities/jobs (just strings) and each ta
 	- ConcreteBuilder: SimpleTaskBuilder, TaskGroupBuilder
 	- Director: Director
 2. **Iterator:** used to traverse the task and execute functions. different types of iterators based on what the department the task is in (external)
-	- Aggregate:
-	- ConcreteAggregate:
-	- Iterator:
-	- ConcreteIterator:
+	- Aggregate: Task
+	- ConcreteAggregate: SimpleTask, TaskGroup
+	- Iterator: TaskIterator
+	- ConcreteIterator: DepartmentTaskIterator
 3. **Adapter:** email/notification service (VMine library used for email correspondence and is adapted in our logging system and sends email on when a project is declared as complete)
 	- Target:
 	- Adapter:
