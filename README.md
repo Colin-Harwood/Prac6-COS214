@@ -97,9 +97,9 @@ Each node has a certain list of responsibilities/jobs (just strings) and each ta
 	- Adapter:
 	- Adaptee:
 4. **Composite:** represents the structure of the project-
-	- Component:
-	- Composite:
-	- Leaf:
+	- Component: Task
+	- Composite: TaskGroup
+	- Leaf: SimpleTask
 5. **Prototype:** Creates snapshots of a task so they can be used in the rollback system and are integrated with the task execution subsystem for log reports and undo functionality
 	- Prototype: Task
 	- ConcretePrototype: SimpleTask and TaskGroup
@@ -110,8 +110,8 @@ Each node has a certain list of responsibilities/jobs (just strings) and each ta
 	- Command: Command
 	- ConcreteCommand: LogCommand & ExecuteCommand
 7. **Chain of Responsibility:** progresses the workflow
-	- Handler:
-	- ConcreteHandler:
+	- Handler: Handler
+	- ConcreteHandler: ConcreteHandlerA, ConcreteHandlerB, ConcreteHandlerC
 8. **Mediator:** looks at task if they time out and changes the state to timed out:
 	- Mediator:
 	- ConcreteMediator:
