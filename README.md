@@ -6,6 +6,17 @@
 Builder builds the composite. There will be concreteBuilders for a leaf node and composite node.
 The `construct()` function will pass in a text file in which the end user defines the structure of the tree and will call the correct concreteBuilder functions.
 
+## Interaction of the Composite Task Nodes and the Chain of Responsibility Handlers
+Each Chain of Responsibility Handler will have a certain domain that it can handle.
+Each Task Node will be in a certain domain.
+For each handler it will do all of the tasks that it can do in the total composite tree.
+After this it passes the object onto the next person.
+
+## Command
+Will sit between the Chain of Responsibility handler and the Composite tasks.
+The command will invoke the tasks functions and be called by the handler.
+While doing this the command will clone itself to save itself for undo and save itself for logging.
+
 **Textfile/Constructor input Format:**  
 ```
 $TaskGroup | 0[
