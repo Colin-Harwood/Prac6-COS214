@@ -7,34 +7,24 @@ Builder builds the composite. There will be concreteBuilders for a leaf node and
 The `construct()` function will pass in a text file in which the end user defines the structure of the tree and will call the correct concreteBuilder functions.
 
 ## Interaction of the Composite Task Nodes and the Chain of Responsibility Handlers
-Each Chain of Responsibility Handler will have a certain domain that it can handle.
-Each Task Node will be in a certain domain.
-For each handler it will do all of the tasks that it can do in the total composite tree.
-After this it passes the object onto the next person.
+Composite builds the task structure, and the chain decides who processes each task based on its size.
 
 ## Command
 Will sit between the Chain of Responsibility handler and the Composite tasks.
 The command will invoke the tasks functions and be called by the handler.
 While doing this the command will clone itself to save itself for undo and save itself for logging.
 
-**Textfile/Constructor input Format:**  
-```
-$TaskGroup | 0[
-	(task | 0)
-	(task | 1)
-	(task | 2)
-	$TaskGroup | 1[
-		(task | 2)
-		(task | 2)
-		(task | 2)
-	]
-]$
+## Composite
+The compsite is used to build each task with the help of other design patterns.
+Each task is represented as a compsite so each task can have subtasks. 
+Simpletask is the leaf node and a subtask which will be handled by the concrete handlers.
+TaskGroup as a nested task with smaller subtasks.
+The client treats one task and the subtasks in the same way.
 
-//dollar sign $ to incase a project
-//square brackets [] indicates a taskgroup
-//brackets indicates a task
-//the number after the '|' is the priority level, 0 for highest and 2 for lowest
-```
+## Chain of Responsibility
+Each handeler holds a pointer to the next task and a range minleaf maxleaf.
+Each concrete handler has its set task groups it can handle if it cant then it sends it down the chain.
+The sender does not know which concrete handler ends up handeling the task.
 
 This textfile is going to require a parser for tree construction.
 ## What does a tasks look like:  
