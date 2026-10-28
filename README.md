@@ -93,10 +93,11 @@ Each node has a certain list of responsibilities/jobs (just strings) and each ta
 	- ConcreteAggregate: SimpleTask, TaskGroup
 	- Iterator: TaskIterator
 	- ConcreteIterator: DepartmentTaskIterator
-3. **Adapter:** email/notification service (VMine library used for email correspondence and is adapted in our logging system and sends email on when a project is declared as complete)
-	- Target:
-	- Adapter:
-	- Adaptee:
+3. **Adapter:** email/notification service (VMime library used for email correspondence and is adapted in our logging system and sends email on when a task or project is declared as complete)
+	- Target: Target
+	- Adapter: VMimeEmailAdapter
+	- Adaptee: VMimeMailer
+	- Client: Command (ExecuteCommand & LogCommand)
 4. **Composite:** represents the structure of the project-
 	- Component: Task
 	- Composite: TaskGroup
