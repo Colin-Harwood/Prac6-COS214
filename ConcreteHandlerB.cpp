@@ -6,6 +6,6 @@ ConcreteHandlerB::ConcreteHandlerB(Command* c) : Handler(c) {
     maxLeaf = 6;
 }
 void ConcreteHandlerB::process(Task* t, int number) {
-    std::cout << "Handler B (category " << number << "): "+ "Subtask done";
+    std::cout << "Handler B (category " << number << "): Subtask done" << std::endl;
     t->execute();
 }

@@ -7,6 +7,6 @@ ConcreteHandlerA::ConcreteHandlerA(Command* c):Handler(c){
 }
 
 void ConcreteHandlerA::process(Task* t, int number) {
-    std::cout << "Handler A (category " << number << "): " + "Subtask done";
+    std::cout << "Handler A (category " << number << "): Subtask done" << std::endl;
     t->execute();
 }
