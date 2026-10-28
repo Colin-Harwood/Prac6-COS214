@@ -11,6 +11,7 @@ public:
     virtual bool isDone() = 0;
     virtual Task *currentItem();
     virtual bool allCompleted();
+    virtual ~TaskIterator();
 };
 
 #endif // TASKITERATOR

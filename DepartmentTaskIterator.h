@@ -18,6 +18,7 @@ private:
 
 public:
     DepartmentTaskIterator(Task *root, int deptLevel);
+    ~DepartmentTaskIterator() override = default;
     void first() override;
     void next() override;
     bool isDone() override;
