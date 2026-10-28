@@ -26,6 +26,14 @@ Each handeler holds a pointer to the next task and a range minleaf maxleaf.
 Each concrete handler has its set task groups it can handle if it cant then it sends it down the chain.
 The sender does not know which concrete handler ends up handeling the task.
 
+## Iterator
+- The iterator pattern allows the CoR Handler classes to traverse the Task composite, without seeing the tree structure. 
+- When a department Handler processes a workflow, it calls the createIterator() on the root to instantiate an external DepartmentTaskIterator 
+- Then we step through tasks matching them by their Department while skipping nodes whose status is Complete, Cancelled, Timed out, or failed.
+- At each valid node returned by currentItem(), the system checks checkAutomatic() to see if the task can be completed automatically via its Command object or needs to be approved manually, then we transition from Pending to In Progress and then to Complete.
+- Once isDone() indicates that all eligible tasks for that department have been processed, we signal the Handler to pass the project to the next Handler in the chain, then we check if every node in the project is either Complete or Cancelled to decide whether the Workflow is finished or if the CoR must repeat
+
+
 This textfile is going to require a parser for tree construction.
 ## What does a tasks look like:  
 - an id (produced by builder)
