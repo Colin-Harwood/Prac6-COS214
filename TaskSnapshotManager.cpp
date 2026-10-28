@@ -6,7 +6,7 @@ TaskSnapshotManager::~TaskSnapshotManager() {
     }
 }
 
-TaskSnapshotManager::addSnapshot(Task* task) {
+void TaskSnapshotManager::addSnapshot(Task* task) {
     history.push(task);
 }
 
