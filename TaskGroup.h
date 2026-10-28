@@ -3,8 +3,9 @@
 
 #include "Task.h"
 #include <vector>
-
+class TaskGroupBuilder;
 class TaskGroup : public Task {
+    friend class TaskGroupBuilder; 
 private:
     std::vector<Task*> children;//vector of simpletasks
 public:

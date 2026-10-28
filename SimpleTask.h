@@ -4,6 +4,7 @@
 #include "Task.h"
 
 class SimpleTask : public Task {
+    friend class SimpleTaskBuilder;
 private:
     int duration;
 public:

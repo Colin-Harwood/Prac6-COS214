@@ -6,13 +6,16 @@
 
 class TaskState;
 class TaskIterator;
-
+class SimpleTaskBuilder;
+class TaskGroupBuilder;
 /**
  * Task = Component (Composite)
  * The name starts with its category number
  * That number is stored in deptLevel and is what the handlers look at
  */
 class Task {
+    friend class SimpleTaskBuilder;
+    friend class TaskGroupBuilder;
 private:
     std::string name;
     std::string deadline;
