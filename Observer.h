@@ -7,6 +7,7 @@ class Observer {
     public:
         virtual void update() = 0;
         virtual void finished(){};
+        virtual ~Observer(){};
 };
 
 #endif
