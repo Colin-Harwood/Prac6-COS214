@@ -17,6 +17,7 @@ build_job:
 test_job:
   stage: test
   script:
+    - chmod +x ./unit_tests
     - ./unit_tests -r=xml -out=report.xml
   artifacts:
     when: always
