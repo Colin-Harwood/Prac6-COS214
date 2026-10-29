@@ -3,15 +3,14 @@
 
 class Task;
 
-class TaskIterator
-{
+class TaskIterator {
 public:
+    virtual ~TaskIterator() {}
     virtual void first() = 0;
     virtual void next() = 0;
     virtual bool isDone() = 0;
-    virtual Task *currentItem();
-    virtual bool allCompleted();
-    virtual ~TaskIterator();
+    virtual Task* currentItem() = 0;
+    virtual bool allCompleted() = 0;
 };
 
-#endif // TASKITERATOR
+#endif // TASKITERATOR_H

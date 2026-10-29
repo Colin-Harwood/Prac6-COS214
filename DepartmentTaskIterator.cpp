@@ -32,9 +32,11 @@ void DepartmentTaskIterator::flatComposite(Task *node)
 
 bool DepartmentTaskIterator::isEligible(Task *t)
 {
-    return (t != nullptr) &&
-           (t->getDepartmentLevel() == targetDepartment) &&
-           (!t->isFinished());
+    if (t == nullptr)
+    {
+        return false;
+    }
+    return (t->getDepartmentLevel() == targetDepartment) && (!t->isFinished());
 }
 
 void DepartmentTaskIterator::first()
