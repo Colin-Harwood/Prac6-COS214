@@ -1,4 +1,5 @@
 #include "SimpleTask.h"
+#include "DepartmentTaskIterator.h"
 #include <iostream>
 
 SimpleTask::SimpleTask(const std::string& name, const std::string& deadline, int duration):Task(name, deadline),duration(duration){}
@@ -18,5 +19,7 @@ Task* SimpleTask::clone() const{
     return new SimpleTask(*this);
 }
 
-//Iterator
-TaskIterator* SimpleTask::createIterator(int){return nullptr;}
+//Iterator edited by Motheo
+TaskIterator* SimpleTask::createIterator(int level){
+    return new DepartmentTaskIterator(this,level);
+}

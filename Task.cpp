@@ -88,3 +88,14 @@ void Task::notify(std::string type) {
         }
     }
 }
+
+// Added by Motheo
+
+bool Task::isFinished() const 
+{
+    if(state != nullptr)
+    {
+        return state->isFinished();
+    }
+    return isComplete;
+}

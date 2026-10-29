@@ -47,6 +47,7 @@ public:
 
     //Iterator
     virtual TaskIterator* createIterator(int level) = 0;
+    bool isFinished() const; // Added by Motheo
 
     //State
     void setCompleteStatus(bool b);
