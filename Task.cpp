@@ -38,7 +38,7 @@ void Task::reject() {}
 void Task::timeout() {}
 void Task::cancel() {}
 
-void Task::reopen() {} 
+void Task::reopen() {}
 
 ///ADDED BY KAI
 
@@ -53,17 +53,22 @@ void Task::restoreFrom(Task* snapshot) {
 
     // 2. Deep copy the state back
     if (snapshot->state) {
-        delete this->state;
-        this->state = snapshot->state->clone();
+        // TODO (State): delete and clone state once TaskState is implemented
+        // this->state = snapshot->state->clone();
     }
 }
 
 // Observer
 void Task::addObserver(Observer* observer) {
+<<<<<<< HEAD
     observers.push_back(observer);
+=======
+
+>>>>>>> Command
 }
 
 void Task::removeObserver(Observer* observer) {
+<<<<<<< HEAD
    auto it = observers.begin();
    while (it != observers.end()) {
     if (*it == observer) {
@@ -99,3 +104,7 @@ bool Task::isFinished() const
     }
     return isComplete;
 }
+=======
+
+}
+>>>>>>> Command

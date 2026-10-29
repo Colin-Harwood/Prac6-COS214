@@ -32,5 +32,8 @@ void ExecuteCommand::undo(Task* t) {
 
 
 Command* ExecuteCommand::clone() const {
-    return new ExecuteCommand(logQueue, snapshotManager);
+    ExecuteCommand* copy = new ExecuteCommand(logQueue, snapshotManager);
+copy->taskName = this->taskName;
+    copy->action = this->action;
+    return copy;
 }
