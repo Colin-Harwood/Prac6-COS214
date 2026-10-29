@@ -1,7 +1,7 @@
 #include "Task.h"
+#include <algorithm>
 
 Task::Task(const std::string& name, const std::string& deadline): name(name), deadline(deadline), deptLevel(parseDeptLevel(name)),isComplete(false), state(nullptr) {}
-// TODO (State): delete state once TaskState is implemented
 Task::~Task() {}
 
 // Reads the department number from the task this is just for the categorys and saves it in dept num
@@ -37,6 +37,8 @@ void Task::reject() {}
 void Task::timeout() {}
 void Task::cancel() {}
 
+void Task::reopen() {} 
+
 ///ADDED BY KAI
 
 void Task::restoreFrom(Task* snapshot) {
@@ -53,4 +55,12 @@ void Task::restoreFrom(Task* snapshot) {
         delete this->state;
         this->state = snapshot->state->clone();
     }
+}
+
+// Observer
+void Task::addObserver(Observer* observer) {
+    
+}
+void Task::removeObserver(Observer* observer) {
+   
 }

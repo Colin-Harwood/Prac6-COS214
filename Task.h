@@ -8,6 +8,7 @@ class TaskState;
 class TaskIterator;
 class SimpleTaskBuilder;
 class TaskGroupBuilder;
+class Observer;
 /**
  * Task = Component (Composite)
  * The name starts with its category number
@@ -22,6 +23,9 @@ private:
     int deptLevel;
     bool isComplete;
     TaskState* state;
+
+    std::vector<Observer*> observers;   // Observer
+
     static int parseDeptLevel(const std::string& taskName);//add to UML
 public:
     Task(const std::string& name, const std::string& deadline);
@@ -53,6 +57,11 @@ public:
     void reject();
     void timeout();
     void cancel();
+    void reopen();                      // State
+
+    //Observer
+    void addObserver(Observer* observer);
+    void removeObserver(Observer* observer);
 
     ///ADDED BY KAI
     void restoreFrom(Task* snapshot);
