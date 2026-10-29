@@ -102,15 +102,10 @@ void Task::restoreFrom(Task* snapshot) {
 
 // Observer
 void Task::addObserver(Observer* observer) {
-<<<<<<< HEAD
     observers.push_back(observer);
-=======
-
->>>>>>> Command
 }
 
 void Task::removeObserver(Observer* observer) {
-<<<<<<< HEAD
    auto it = observers.begin();
    while (it != observers.end()) {
     if (*it == observer) {
@@ -146,7 +141,3 @@ bool Task::isFinished() const
     }
     return isComplete;
 }
-=======
-
-}
->>>>>>> Command
