@@ -1,4 +1,5 @@
 #include "Task.h"
+#include "Observer.h"
 #include <algorithm>
 
 Task::Task(const std::string& name, const std::string& deadline): name(name), deadline(deadline), deptLevel(parseDeptLevel(name)),isComplete(false), state(nullptr) {}
@@ -59,8 +60,31 @@ void Task::restoreFrom(Task* snapshot) {
 
 // Observer
 void Task::addObserver(Observer* observer) {
-    
+    observers.push_back(observer);
 }
+
 void Task::removeObserver(Observer* observer) {
-   
+   auto it = observers.begin();
+   while (it != observers.end()) {
+    if (*it == observer) {
+        delete *it;
+        it = observers.erase(it);
+    } else {
+        ++it;
+    }
+   }
+}
+
+// ADDED BY COLIN   
+
+void Task::notify(std::string type) {
+    if (type == "finished") {
+        for (size_t i = 0; i < observers.size(); i++) {
+            observers[i]->finished();
+        }
+    } else if (type == "update") {
+        for (size_t i = 0; i < observers.size(); i++) {
+            observers[i]->update();
+        }
+    }
 }
