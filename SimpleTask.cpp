@@ -9,7 +9,14 @@ void SimpleTask::execute() {
 bool SimpleTask::isLeaf() const {
     return true;
 }
-//Prototype
-Task* SimpleTask::clone() const{return nullptr;}
+
+//added by KAI
+SimpleTask::SimpleTask(const SimpleTask& other) : Task(other), duration(other.duration) {}
+
+//Prototype edited by KAI
+Task* SimpleTask::clone() const{
+    return new SimpleTask(*this);
+}
+
 //Iterator
 TaskIterator* SimpleTask::createIterator(int){return nullptr;}

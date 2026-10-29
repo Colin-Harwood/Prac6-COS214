@@ -4,7 +4,7 @@ Task::Task(const std::string& name, const std::string& deadline): name(name), de
 // TODO (State): delete state once TaskState is implemented
 Task::~Task() {}
 
-// Reads the department number from the task this is just for the categorys and saves it in dept num 
+// Reads the department number from the task this is just for the categorys and saves it in dept num
 int Task::parseDeptLevel(const std::string& taskName) {
     int value = 0;
     for (char c : taskName){
@@ -36,3 +36,21 @@ void Task::complete() {}
 void Task::reject() {}
 void Task::timeout() {}
 void Task::cancel() {}
+
+///ADDED BY KAI
+
+void Task::restoreFrom(Task* snapshot) {
+    if (!snapshot) return;
+
+    // 1. Copy primitive/string fields back (NO pointer swapping)
+    this->name = snapshot->name;
+    this->deadline = snapshot->deadline;
+    this->deptLevel = snapshot->deptLevel;
+    this->isComplete = snapshot->isComplete;
+
+    // 2. Deep copy the state back
+    if (snapshot->state) {
+        delete this->state;
+        this->state = snapshot->state->clone();
+    }
+}

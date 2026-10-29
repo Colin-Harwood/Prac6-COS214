@@ -27,7 +27,7 @@ void TaskGroup::add(Task* t){
     }
 }
 
-// Detaches the child the CALLER NEEDS TO DELETE 
+// Detaches the child the CALLER NEEDS TO DELETE
 void TaskGroup::remove(Task* t){
     children.erase(std::remove(children.begin(),children.end(),t),children.end());
 }
@@ -37,9 +37,16 @@ bool TaskGroup::isLeaf() const{
 std::vector<Task*> TaskGroup::getChildren() const{
     return children;
 }
+TaskGroup::TaskGroup(const TaskGroup& other)
+    : Task(other) {
+    // Deep copy children
+    for (Task* child : other.children) {
+        this->children.push_back(child->clone());
+    }
+}
 //Prototype
 Task* TaskGroup::clone() const{
-    return nullptr;
+    return new TaskGroup(*this);
 }
 //Iterator
 TaskIterator* TaskGroup::createIterator(int){
