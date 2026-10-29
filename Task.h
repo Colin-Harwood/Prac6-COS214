@@ -62,6 +62,7 @@ public:
     //Observer
     void addObserver(Observer* observer);
     void removeObserver(Observer* observer);
+    void notify();
 
     ///ADDED BY KAI
     void restoreFrom(Task* snapshot);

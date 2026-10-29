@@ -64,3 +64,7 @@ void Task::addObserver(Observer* observer) {
 void Task::removeObserver(Observer* observer) {
    
 }
+
+void Task::notify() {
+    
+}
