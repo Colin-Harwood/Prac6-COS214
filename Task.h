@@ -50,6 +50,8 @@ public:
     bool isFinished() const; // Added by Motheo
 
     //State
+    ///ADDED BY MAERYN (State): copies get their own TaskState (clone), never a shared pointer
+    Task(const Task& other);
     void setCompleteStatus(bool b);
     void setState(TaskState* s);
     std::string getStateName() const;
