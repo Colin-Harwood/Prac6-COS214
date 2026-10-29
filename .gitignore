@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
 
+.vscode/
+.vscode mine/
+
 # Compiled Object files
 *.slo
 *.lo
@@ -66,3 +69,4 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+".vscode/" 
