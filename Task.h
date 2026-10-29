@@ -50,6 +50,7 @@ public:
     bool isFinished() const; // Added by Motheo
 
     //State
+    Task(const Task& other);
     void setCompleteStatus(bool b);
     void setState(TaskState* s);
     std::string getStateName() const;
