@@ -1,12 +1,25 @@
 #include "ConcreteHandlerC.h"
 #include "Task.h"
 #include "Command.h"
+#include "TaskIterator.h"
 #include <iostream>
 ConcreteHandlerC::ConcreteHandlerC(Command* c) : Handler(c) {
     minLeaf = 7;
     maxLeaf = 9;
 }
+
 void ConcreteHandlerC::process(Task* t, int number) {
-    std::cout << "Handler C (category " << number << "): Subtask done" << std::endl;
-    command->execute(t);
+    if (t == nullptr) return;
+
+    TaskIterator* it = t->createIterator(number);
+    for (it->first(); !it->isDone(); it->next()) {
+        Task* currentTask = it->currentItem();
+        if (currentTask != nullptr && command != nullptr) {
+            currentTask->execute();
+            command->execute(currentTask);
+            std::cout << "Handler C (category " << number << "): Subtask "
+                      << currentTask->getName() << " done" << std::endl;
+        }
+    }
+    delete it;
 }
