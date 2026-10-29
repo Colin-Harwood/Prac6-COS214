@@ -1,4 +1,5 @@
 #include "TaskGroup.h"
+#include "DepartmentTaskIterator.h"
 #include <algorithm>
 
 TaskGroup::TaskGroup(const std::string& name, const std::string& deadline):Task(name, deadline) {}
@@ -48,7 +49,7 @@ TaskGroup::TaskGroup(const TaskGroup& other)
 Task* TaskGroup::clone() const{
     return new TaskGroup(*this);
 }
-//Iterator
-TaskIterator* TaskGroup::createIterator(int){
-    return nullptr;
+//Iterator edited by Motheo
+TaskIterator* TaskGroup::createIterator(int level){
+    return new DepartmentTaskIterator(this, level);
 }
