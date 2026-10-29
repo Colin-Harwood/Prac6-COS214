@@ -21,9 +21,11 @@ private:
     std::string name;
     std::string deadline;
     int deptLevel;
-    bool isComplete;     
-    TaskState* state;    
+    bool isComplete;
+    TaskState* state;
+
     std::vector<Observer*> observers;   // Observer
+
     static int parseDeptLevel(const std::string& taskName);//add to UML
 public:
     Task(const std::string& name, const std::string& deadline);
@@ -35,8 +37,8 @@ public:
     //Composite
     virtual int totalTime() const = 0;
     virtual void execute() = 0;
-    virtual void add(Task* t);       
-    virtual void remove(Task* t);    
+    virtual void add(Task* t);
+    virtual void remove(Task* t);
     virtual bool isLeaf() const = 0;
     virtual std::vector<Task*> getChildren() const;
 
@@ -57,12 +59,12 @@ public:
     void cancel();
     void reopen();                      // State
 
-    //Memento
-    void restoreFrom(Task& task);
-
     //Observer
     void addObserver(Observer* observer);
     void removeObserver(Observer* observer);
+
+    ///ADDED BY KAI
+    void restoreFrom(Task* snapshot);
 };
 
 #endif
