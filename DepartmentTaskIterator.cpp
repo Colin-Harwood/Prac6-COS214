@@ -36,7 +36,7 @@ bool DepartmentTaskIterator::isEligible(Task *t)
     {
         return false;
     }
-    return (t->getDepartmentLevel() == targetDepartment) && (!t->isFinished());
+    return t->isLeaf() && (t->getDepartmentLevel() == targetDepartment) && (!t->isFinished());
 }
 
 void DepartmentTaskIterator::first()
@@ -75,7 +75,7 @@ bool DepartmentTaskIterator::allCompleted()
 {
     for (std::size_t i = 0; i < flatTasks.size(); ++i)
     {
-        if (flatTasks[i] != nullptr && !flatTasks[i]->isFinished())
+        if (flatTasks[i] != nullptr && flatTasks[i]->isLeaf() && !flatTasks[i]->isFinished())
         {
             return false;
         }
