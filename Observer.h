@@ -4,7 +4,9 @@
 // #include "TaskState.h"
 
 class Observer {
-    // virtual update(state: TaskState*) = 0;
+    public:
+        virtual void update() = 0;
+        virtual void finished(){};
 };
 
 #endif

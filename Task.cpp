@@ -1,4 +1,5 @@
 #include "Task.h"
+#include "Observer.h"
 #include <algorithm>
 
 Task::Task(const std::string& name, const std::string& deadline): name(name), deadline(deadline), deptLevel(parseDeptLevel(name)),isComplete(false), state(nullptr) {}
@@ -65,6 +66,16 @@ void Task::removeObserver(Observer* observer) {
    
 }
 
-void Task::notify() {
-    
+// ADDED BY COLIN   
+
+void Task::notify(std::string type) {
+    if (type == "finished") {
+        for (size_t i = 0; i < observers.size(); i++) {
+            observers[i]->finished();
+        }
+    } else if (type == "update") {
+        for (size_t i = 0; i < observers.size(); i++) {
+            observers[i]->update();
+        }
+    }
 }

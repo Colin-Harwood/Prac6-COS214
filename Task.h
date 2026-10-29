@@ -62,7 +62,7 @@ public:
     //Observer
     void addObserver(Observer* observer);
     void removeObserver(Observer* observer);
-    void notify();
+    void notify(std::string type);
 
     ///ADDED BY KAI
     void restoreFrom(Task* snapshot);
