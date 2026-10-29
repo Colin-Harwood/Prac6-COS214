@@ -23,12 +23,16 @@ void LogCommand::undo(Task* t) {
 
 Command* LogCommand::clone() const {
     // Clone creates a new LogCommand pointing to the same file
-    return new LogCommand(logQueue, snapshotManager, filename);
+    LogCommand* copy = new LogCommand(logQueue, snapshotManager, filename);
+    copy->taskName = this->taskName;
+    copy->action = this->action;
+    return copy;
 }
 
 
 void LogCommand::flushTo() {
     if (sink && sink->is_open()) {
         logQueue->flushTo(*sink);
+        sink->flush();
     }
 }

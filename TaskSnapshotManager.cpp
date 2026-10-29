@@ -1,10 +1,17 @@
 #include "TaskSnapshotManager.h"
 
+TaskSnapshotManager::TaskSnapshotManager() {}
+
 TaskSnapshotManager::~TaskSnapshotManager() {
     while (!history.empty()) {
         delete history.top();
         history.pop();
     }
+}
+
+///quick fix: maybe check -KAI
+void TaskSnapshotManager::save(Task* task) {
+    addSnapshot(task);
 }
 
 void TaskSnapshotManager::addSnapshot(Task* task) {

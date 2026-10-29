@@ -52,19 +52,19 @@ public:
     void setCompleteStatus(bool b);
     void setState(TaskState* s);
     std::string getStateName() const;
-    void start();
-    void complete();
-    void reject();
-    void timeout();
-    void cancel();
-    void reopen();                      // State
+    virtual void start();
+    virtual void complete();
+    virtual void reject();
+    virtual void timeout();
+    virtual void cancel();
+    virtual void reopen();                      // State
 
     //Observer
     void addObserver(Observer* observer);
     void removeObserver(Observer* observer);
 
     ///ADDED BY KAI
-    void restoreFrom(Task* snapshot);
+    virtual void restoreFrom(Task* snapshot);
 };
 
 #endif

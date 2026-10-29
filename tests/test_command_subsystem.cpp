@@ -1,11 +1,11 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 
-#include "Command.h"
-#include "ExecuteCommand.h"
-#include "LogCommand.h"
-#include "LogQueue.h"
-#include "TaskSnapshotManager.h"
+#include "../Command.h"
+#include "../ExecuteCommand.h"
+#include "../LogCommand.h"
+#include "../LogQueue.h"
+#include "../TaskSnapshotManager.h"
 
 #include <sstream>
 #include <fstream>
@@ -21,7 +21,7 @@ public:
     int restoreCount = 0;
     bool shouldThrowOnStart = false;
 
-    explicit MockTask(const std::string& n) : name(n) {}
+    explicit MockTask(const std::string& n) : Task(n, ""), name(n) {}
 
     // Copy constructor for clone()
     MockTask(const MockTask& other)
@@ -29,7 +29,7 @@ public:
           completed(other.completed), restoreCount(other.restoreCount),
           shouldThrowOnStart(other.shouldThrowOnStart) {}
 
-    std::string getName() const override { return name; }
+    std::string getName() const { return name; }
 
     void start() override {
         if (shouldThrowOnStart) throw std::runtime_error("Start failed");
@@ -48,12 +48,11 @@ public:
         completed = false;
     }
 
-    // Dummy implementations for other Task pure virtuals if required by your base class
-    std::string getDeadline() const override { return ""; }
-    int getDepartmentLevel() const override { return 0; }
+    // Dummy implementations for Task pure virtuals
     bool isLeaf() const override { return true; }
     int totalTime() const override { return 0; }
-
+    void execute() override {}
+    TaskIterator* createIterator(int) override { return nullptr; }
 };
 
 TEST_CASE("LogQueue basic operations") {
