@@ -3,6 +3,7 @@ image: gcc:latest
 stages:
   - build
   - test
+  - notify
 
 build_job:
   stage: build
