@@ -14,6 +14,7 @@ public:
     bool isLeaf() const override;
 
     // Prototype
+    SimpleTask(const SimpleTask& other);
     Task* clone() const override;
     TaskIterator* createIterator(int level) override;
 };
