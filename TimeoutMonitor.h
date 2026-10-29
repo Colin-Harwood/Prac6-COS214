@@ -3,20 +3,30 @@
 
 #include "Observer.h"
 #include "Task.h"
+#include "TimedOutState.h"
 
+#include <thread>
+#include <mutex>
 #include <chrono>
+#include <condition_variable>
 
-class TimeoutMonitor : public Observer
-{
+class TimeoutMonitor {
 private:
-    Task* task;
-    TaskState* state;
     using Clock = std::chrono::steady_clock;
-    Clock::time_point start_time;
+    Task* task;
+    Clock::time_point lastUpdateTime;
+    std::thread worker_thread;
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool stopRequested = false;
+
+    void clockWatcher();
+
 public:
     TimeoutMonitor(Task* task);
     ~TimeoutMonitor();
-    void update(TaskState* state);
+    void update();
+    void finished();
 };
 
 
