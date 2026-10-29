@@ -1,5 +1,7 @@
 #include "Task.h"
 #include "Observer.h"
+#include "TaskState.h"
+#include "PendingState.h"
 #include <algorithm>
 
 Task::Task(const std::string& name, const std::string& deadline): name(name), deadline(deadline), deptLevel(parseDeptLevel(name)),isComplete(false), state(nullptr) {}
@@ -30,15 +32,55 @@ void Task::setCompleteStatus(bool b){
     isComplete = b;
 }
 // State
-void Task::setState(TaskState* s){state = s;}
-std::string Task::getStateName() const {return "Unknown (check line 33 task.cpp)";}
-void Task::start() {}
-void Task::complete() {}
-void Task::reject() {}
-void Task::timeout() {}
-void Task::cancel() {}
+static TaskState* currentState(TaskState*& s) {
+    if (!s) {
+        s = new PendingState();
+    }
+    return s;
+}
 
-void Task::reopen() {}
+Task::Task(const Task& other)
+    : name(other.name), deadline(other.deadline), deptLevel(other.deptLevel),
+      isComplete(other.isComplete),
+      state(other.state ? other.state->clone() : new PendingState()),
+      observers() {}
+
+void Task::setState(TaskState* s){
+    if (s == state) {
+        return;
+    }
+    delete state;
+    state = s;
+}
+std::string Task::getStateName() const {
+    return state ? state->getName() : "Pending";
+}
+void Task::start() {
+    setState(currentState(state)->start(this));
+    notify("update");
+}
+void Task::complete() {
+    setState(currentState(state)->complete(this));
+    isComplete = true;
+    notify("finished");
+}
+void Task::reject() {
+    setState(currentState(state)->reject(this));
+    notify("update");
+}
+void Task::timeout() {
+    setState(currentState(state)->timeout(this));
+    notify("update");
+}
+void Task::cancel() {
+    setState(currentState(state)->cancel(this));
+    notify("finished");
+}
+void Task::reopen() {
+    setState(currentState(state)->reopen(this));
+    isComplete = false;
+    notify("update");
+}
 
 ///ADDED BY KAI
 
@@ -53,8 +95,8 @@ void Task::restoreFrom(Task* snapshot) {
 
     // 2. Deep copy the state back
     if (snapshot->state) {
-        // TODO (State): delete and clone state once TaskState is implemented
-        // this->state = snapshot->state->clone();
+        delete this->state;
+        this->state = snapshot->state->clone();
     }
 }
 
