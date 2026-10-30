@@ -1,21 +1,25 @@
 CXX = g++
-CXXFLAGS = -std=c++20 -Wall -Wextra -Iinclude -Itests
+CXXFLAGS = -std=c++11 -Wall -I./ImGui -I./ImGui/backends
+LIBS = -lGL -lglfw
 
-# Automatically list all .cpp files in src/ and tests/
-ALL_SRC = $(wildcard src/*.cpp)
-TEST_SRC = $(wildcard tests/*.cpp)
+# ImGui core and backend files updated to match your folder name
+IMGUI_SRC = ImGui/imgui.cpp ImGui/imgui_draw.cpp ImGui/imgui_tables.cpp ImGui/imgui_widgets.cpp \
+            ImGui/backends/imgui_impl_glfw.cpp ImGui/backends/imgui_impl_opengl3.cpp
 
-# Filter out src/main.cpp so the test executable uses doctest's main instead
-SRC_NO_MAIN = $(filter-out src/main.cpp, $(ALL_SRC))
+# Your workflow system files
+PROJECT_SRC = main.cpp # Add Facade.cpp, Builder.cpp, etc. here
 
-TEST_TARGET = unit_tests
+SOURCES = $(IMGUI_SRC) $(PROJECT_SRC)
+OBJECTS = $(SOURCES:.cpp=.o)
+TARGET = workflow_gui
 
-# Default target
-all: $(TEST_TARGET)
+all: $(TARGET)
 
-# Build the test binary dynamically
-$(TEST_TARGET): $(SRC_NO_MAIN) $(TEST_SRC)
-	$(CXX) $(CXXFLAGS) $^ -o $(TEST_TARGET)
+$(TARGET): $(OBJECTS)
+	$(CXX) $(OBJECTS) -o $@ $(LIBS)
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(TEST_TARGET) report.xml
+	rm -f $(OBJECTS) $(TARGET)
