@@ -1,0 +1,23 @@
+image: gcc:latest
+
+stages:
+  - build
+  - test
+
+build_job:
+  stage: build
+  script:
+    - make unit_tests
+  artifacts:
+    paths:
+      - unit_tests
+    expire_in: 1 hour
+
+test_job:
+  stage: test
+  script:
+    - ./unit_tests -r=xml -out=report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
