@@ -1,40 +1,42 @@
 #include "SimpleTaskBuilder.h"
 #include "SimpleTask.h"
 
-SimpleTaskBuilder::SimpleTaskBuilder() : task(nullptr) {
+SimpleTaskBuilder::SimpleTaskBuilder(){
+    task = new SimpleTask("", "", 0);
 }
 
 SimpleTaskBuilder::~SimpleTaskBuilder() {
 }
 
 void SimpleTaskBuilder::setName(std::string name) {
-    // Implement setting name on task
-    task.name = name;
+    //  setting name on task
+    task->name = name;
+    task->deptLevel = Task::parseDeptLevel(name);
 }
 
 void SimpleTaskBuilder::setDeadline(std::string deadline) {
-    // Implement setting deadline on task
-    task.deadline = deadline;
+    //  setting deadline on task
+    task->deadline = deadline;
 }
 
 void SimpleTaskBuilder::setDeptLevel(int deptLevel) {
-    // Implement setting dept level on task
-    task.deptLevel = deptLevel;
+    //  setting dept level on task
+    task->deptLevel = deptLevel;
 }
 
 void SimpleTaskBuilder::setDuration(int duration) {
-    // Implement setting duration on task
-    task.duration = duration;
+    //  setting duration on task
+    task->duration = duration;
 }
 
 void SimpleTaskBuilder::setComplete(bool complete) {
-    // Implement setting complete status on task
-    task.complete = false;
+    //  setting complete status on task
+    task->isComplete = complete;
 }
 
 void SimpleTaskBuilder::setState(TaskState* state) {
-    // Implement setting state on composite task
-    task.state = state
+    //  setting state on composite task
+    task->state = state;
 }
 
 void SimpleTaskBuilder::setChildren(std::vector<Task*> children) {

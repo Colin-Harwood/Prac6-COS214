@@ -2,8 +2,7 @@
 #define SIMPLETASKBUILDER_H
 
 #include "Builder.h"
-
-class SimpleTask* task; // Forward declaration or include SimpleTask.h
+#include "SimpleTask.h"
 
 class SimpleTaskBuilder : public Builder {
 private:

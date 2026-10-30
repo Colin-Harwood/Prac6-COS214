@@ -1,42 +1,45 @@
 #include "TaskGroupBuilder.h"
 #include "TaskGroup.h"
 
-TaskGroupBuilder::TaskGroupBuilder() : task(nullptr) {
+TaskGroupBuilder::TaskGroupBuilder() {
+    task = new TaskGroup("", "");
 }
 
 TaskGroupBuilder::~TaskGroupBuilder() {
 }
 
 void TaskGroupBuilder::setName(std::string name) {
-    // Implement setting name on composite task
-    task.name = name;
+    //  setting name on composite task
+    task->name = name;
+    task->deptLevel = Task::parseDeptLevel(name);
 
 }
 
 void TaskGroupBuilder::setDeadline(std::string deadline) {
-    // Implement setting deadline on composite task
-    task.deadline = deadline;
+    //  setting deadline on composite task
+    task->deadline = deadline;
 }
 
 void TaskGroupBuilder::setDeptLevel(int deptLevel) {
-    // Implement setting dept level on composite task
-    task.deptLevel = deptLevel;
+    //  setting dept level on composite task
+    task->deptLevel = deptLevel;
 }
 
 void TaskGroupBuilder::setComplete(bool complete) {
-    // Implement setting complete status on composite task
-    task.complete = false;
+    //  setting complete status on composite task
+    task->isComplete = complete;
 
 }
 
 void TaskGroupBuilder::setState(TaskState* state) {
-    // Implement setting state on composite task
-    task.state = state
+    //  setting state on composite task
+    task->state = state;
 }
 
 void TaskGroupBuilder::setChildren(std::vector<Task*> children) {
-    // Implement adding child tasks to composite task
-    
+    for (Task* child : children) {
+        task->add(child);
+    }
 }
 
 TaskGroup* TaskGroupBuilder::getResult() {

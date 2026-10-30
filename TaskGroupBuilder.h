@@ -2,6 +2,7 @@
 #define TASKGROUPBUILDER_H
 
 #include "Builder.h"
+#include "TaskGroup.h"
 
 class TaskGroupBuilder : public Builder {
 private:
