@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++20 -Wall -Wextra -Iinclude -Itests
+CXXFLAGS = -std=c++11 -Wall -Wextra -Iinclude -Itests
 
 # Automatically list all .cpp files in src/ and tests/
 ALL_SRC = $(wildcard *.cpp)
