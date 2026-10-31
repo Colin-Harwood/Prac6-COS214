@@ -30,9 +30,9 @@ private:
 public:
     Task(const std::string& name, const std::string& deadline);
     virtual ~Task();
-    std::string getName() const;
-    std::string getDeadline() const;
-    int getDepartmentLevel() const;
+    virtual std::string getName() const;
+    virtual std::string getDeadline() const;
+    virtual int getDepartmentLevel() const;
 
     //Composite
     virtual int totalTime() const = 0;
@@ -47,13 +47,13 @@ public:
 
     //Iterator
     virtual TaskIterator* createIterator(int level) = 0;
-    bool isFinished() const; // Added by Motheo
+    virtual bool isFinished() const; // Added by Motheo
 
     //State
     Task(const Task& other);
-    void setCompleteStatus(bool b);
-    void setState(TaskState* s);
-    std::string getStateName() const;
+    virtual void setCompleteStatus(bool b);
+    virtual void setState(TaskState* s);
+    virtual std::string getStateName() const;
     virtual void start();
     virtual void complete();
     virtual void reject();
@@ -62,9 +62,9 @@ public:
     virtual void reopen();                      // State
 
     //Observer
-    void addObserver(Observer* observer);
-    void removeObserver(Observer* observer);
-    void notify(std::string type);
+    virtual void addObserver(Observer* observer);
+    virtual void removeObserver(Observer* observer);
+    virtual void notify(std::string type);
 
     ///ADDED BY KAI
     virtual void restoreFrom(Task* snapshot);
