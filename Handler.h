@@ -21,6 +21,7 @@ protected:
     LogCommand* logcommand;
 
     virtual void process(Task* t, int number) = 0;
+    bool runTask(Task* task, const char* label);   // true if the task ended Completed
 public:
     explicit Handler(Command* c = nullptr);
     virtual ~Handler();
