@@ -17,9 +17,14 @@ private:
 
 public:
     VMimeEmailAdapter(VMimeMailer *mailer,
-                      std::string sender = "noreply@tividy.org",
+                      std::string sender = "litekd18@gmail.com",
                       const std::string &defaultRecipient = "");
     ~VMimeEmailAdapter() override;
+
+    using Target::notifyProjectComplete;
+    using Target::notifyStateChange;
+    using Target::notifyTaskComplete;
+
     void notifyTaskComplete(Task *task, std::string recipientEmail) override;
     void notifyProjectComplete(Task *project, std::string auditLog, std::string recipientEmail) override;
     void notifyStateChange(Task *task, const std::string &eventAction, const std::string &recipientEmail) override;

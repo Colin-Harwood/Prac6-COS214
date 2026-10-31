@@ -5,11 +5,21 @@
 
 namespace
 {
-    class TividyCertVerifier : public vmime::security::cert::certificateVerifier
+    class TividyCertVerifier final
+        : public vmime::security::cert::certificateVerifier
     {
     public:
-        void verify(const vmime::shared_ptr<vmime::security::cert::certificateChain> &chain,
-                    const vmime::string &hostname) override
+        virtual void verify(
+            const vmime::shared_ptr<vmime::security::cert::certificateChain> &chain,
+            const vmime::string &hostname)
+        {
+            (void)chain;
+            (void)hostname;
+        }
+        
+        virtual void verify(
+            vmime::shared_ptr<vmime::security::cert::certificateChain> chain,
+            const vmime::string &hostname) override
         {
             (void)chain;
             (void)hostname;
