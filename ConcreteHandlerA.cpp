@@ -3,6 +3,7 @@
 #include "Command.h"
 #include "LogCommand.h"
 #include "TaskIterator.h"
+#include "TimeoutMonitor.h"
 #include <iostream>
 
 ConcreteHandlerA::ConcreteHandlerA(Command* c) : Handler(c) {
@@ -18,11 +19,20 @@ void ConcreteHandlerA::process(Task* t, int number) {
         Task* currentTask = it->currentItem();
         if (currentTask == nullptr) continue;
 
-        command->execute(currentTask);
-        std::cout << "Handler A (category " << number << "): Subtask "<< currentTask->getName() << " done" << std::endl;
+        TimeoutMonitor* monitor = new TimeoutMonitor(currentTask);
+        currentTask->addObserver(monitor);
+
+        bool done = runTask(currentTask, "Handler A");
+
+        currentTask->removeObserver(monitor);   // detaches and deletes the monitor
+
+        if (done) {
+            std::cout << "Handler A (category " << number << "): Subtask "
+                      << currentTask->getName() << " done" << std::endl;
+        }
 
         if (logcommand != nullptr && it->allCompleted()) {
-            logcommand->execute(t);   // very last task, log once
+            logcommand->execute(t);
         }
     }
     delete it;
