@@ -13,12 +13,22 @@
 #include "LogQueue.h"
 #include "TaskSnapshotManager.h"
 #include "DepartmentTaskIterator.h"
-#include "Observer.h"
 
 #include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <sstream>
+
+namespace {
+class ActionLog : public Command {
+public:
+    ActionLog(LogQueue* q, TaskSnapshotManager* s) : Command(q, s) {}
+    void execute(Task*) override {}
+    void undo(Task*) override {}
+    Command* clone() const override { return new ActionLog(*this); }
+    void log(Task* t, const std::string& act) { record(t, act); }
+};
+}
 
 TividyFacade::TividyFacade()
     : director(nullptr), root(nullptr), chain(nullptr),
@@ -28,9 +38,6 @@ TividyFacade::TividyFacade()
 }
 
 TividyFacade::~TividyFacade() {
-    for (size_t i = 0; i < monitors.size(); i++) {
-        delete monitors[i];
-    }
     for (size_t i = 0; i < handlers.size(); i++) {
         delete handlers[i];
     }
@@ -61,8 +68,6 @@ void TividyFacade::buildChain() {
     chain = handlers[0];
 }
 
-void TividyFacade::attachObservers(Task*) {}
-
 bool TividyFacade::loadWorkflow(const std::string& file) {
     std::cout << "Cannot load \"" << file << "\": loading from a file is not supported yet." << std::endl;
     return false;
@@ -72,9 +77,6 @@ void TividyFacade::setRoot(Task* t) {
     delete root;
     root = t;
     undoTargets.clear();
-    if (root) {
-        attachObservers(root);
-    }
 }
 
 void TividyFacade::runWorkflow() {
@@ -182,6 +184,10 @@ bool TividyFacade::addTask(const std::string& name, const std::string& deadline,
         std::cout << "Call beginWorkflow first." << std::endl;
         return false;
     }
+    if (deptLevel < 1 || deptLevel > 9) {
+        std::cout << "Task level must be from 1 to 9." << std::endl;
+        return false;
+    }
     TaskInput task;
     task.name = name;
     task.deadline = deadline;
@@ -266,14 +272,18 @@ std::string TividyFacade::getTaskStatus(const std::string& taskName) {
 }
 
 void TividyFacade::showLog() {
-    if (logQueue->empty()) {
+    logCommand->flushTo();
+    std::ifstream file("workflow.log");
+    std::ostringstream log;
+    log << file.rdbuf();
+    if (log.str().empty()) {
         std::cout << "(log is empty)" << std::endl;
         return;
     }
-    logQueue->flushTo(std::cout);
+    std::cout << log.str();
 }
 
-bool TividyFacade::transition(const std::string& taskName, void (Task::*move)()) {
+bool TividyFacade::transition(const std::string& taskName, void (Task::*move)(), const std::string& action) {
     Task* t = findTask(taskName);
     if (!t) {
         std::cout << "No task named \"" << taskName << "\"." << std::endl;
@@ -288,13 +298,27 @@ bool TividyFacade::transition(const std::string& taskName, void (Task::*move)())
         return false;
     }
     undoTargets.push_back(t);
+    ActionLog(logQueue, snapshotManager).log(t, action);
+    closeLogIfFinished();
     return true;
 }
 
-bool TividyFacade::startTask(const std::string& taskName)  { return transition(taskName, &Task::start); }
-bool TividyFacade::rejectTask(const std::string& taskName) { return transition(taskName, &Task::reject); }
-bool TividyFacade::cancelTask(const std::string& taskName) { return transition(taskName, &Task::cancel); }
-bool TividyFacade::reopenTask(const std::string& taskName) { return transition(taskName, &Task::reopen); }
+void TividyFacade::closeLogIfFinished() {
+    std::vector<Task*> leaves;
+    collectLeaves(root, leaves);
+    for (size_t i = 0; i < leaves.size(); i++) {
+        if (!leaves[i]->isFinished()) {
+            return;
+        }
+    }
+    logCommand->execute(root);
+    sendCompletionEmail();
+}
+
+bool TividyFacade::startTask(const std::string& taskName)  { return transition(taskName, &Task::start, "STARTED"); }
+bool TividyFacade::rejectTask(const std::string& taskName) { return transition(taskName, &Task::reject, "REJECTED"); }
+bool TividyFacade::cancelTask(const std::string& taskName) { return transition(taskName, &Task::cancel, "CANCELLED"); }
+bool TividyFacade::reopenTask(const std::string& taskName) { return transition(taskName, &Task::reopen, "REOPENED"); }
 
 bool TividyFacade::completeTask(const std::string& taskName) {
     Task* t = findTask(taskName);
@@ -306,9 +330,10 @@ bool TividyFacade::completeTask(const std::string& taskName) {
             return false;
         }
         undoTargets.push_back(t);
+        closeLogIfFinished();
         return true;
     }
-    return transition(taskName, &Task::complete);
+    return transition(taskName, &Task::complete, "COMPLETED");
 }
 
 bool TividyFacade::undoLast() {

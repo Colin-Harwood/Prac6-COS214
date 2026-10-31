@@ -13,7 +13,6 @@ class LogCommand;
 class LogQueue;
 class TaskSnapshotManager;
 class Target;
-class Observer;
 
 class TividyFacade {
 private:
@@ -23,7 +22,6 @@ private:
     LogQueue* logQueue;
     TaskSnapshotManager* snapshotManager;
     Target* notifier;
-    std::vector<Observer*> monitors;
 
     std::vector<Handler*> handlers;
     Command* command;
@@ -32,7 +30,6 @@ private:
     std::vector<Task*> undoTargets;
 
     void buildChain();
-    void attachObservers(Task* t);
     Task* findTask(const std::string& taskName);
 
     Task* findIn(Task* node, const std::string& taskName);
@@ -41,7 +38,8 @@ private:
     void printNode(Task* node, int depth);
     int dispatchLevel(int level);
     void sendCompletionEmail();
-    bool transition(const std::string& taskName, void (Task::*move)());
+    bool transition(const std::string& taskName, void (Task::*move)(), const std::string& action);
+    void closeLogIfFinished();
 
 public:
     TividyFacade();
