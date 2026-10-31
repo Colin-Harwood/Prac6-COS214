@@ -1,6 +1,7 @@
 #include "ConcreteHandlerB.h"
 #include "Task.h"
 #include "Command.h"
+#include "LogCommand.h"
 #include "TaskIterator.h"
 #include <iostream>
 
@@ -17,9 +18,12 @@ void ConcreteHandlerB::process(Task* t, int number) {
         Task* currentTask = it->currentItem();
         if (currentTask == nullptr) continue;
 
-        command->execute(currentTask);   // start() + complete() happen inside the command
-        std::cout << "Handler B (category " << number << "): Subtask "
-                  << currentTask->getName() << " done" << std::endl;
+        command->execute(currentTask); 
+        std::cout << "Handler B (category " << number << "): Subtask "<< currentTask->getName() << " done" << std::endl;
+
+        if (logcommand != nullptr && it->allCompleted()) {
+            logcommand->execute(t);   // very last task, log once
+        }
     }
     delete it;
 }
