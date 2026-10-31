@@ -1,7 +1,7 @@
 #ifndef OBSERVER_H
 #define OBSERVER_H
 
-// #include "TaskState.h"
+#include "TaskState.h"
 
 class Observer {
     public:

@@ -1,7 +1,7 @@
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+// #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
-#include "TimeoutMonitor.h"
-#include "Task.h"
+#include "../TimeoutMonitor.h"
+#include "../Task.h"
 #include <chrono>
 #include <thread>
 
@@ -9,12 +9,11 @@ class MockTask : public Task {
 public:
     MockTask(const std::string& name, const std::string& deadline) 
         : Task(name, deadline) {}
-    
     int totalTime() const override { return 0; }
     void execute() override {}
     bool isLeaf() const override { return true; }
     Task* clone() const override { return new MockTask(*this); }
-    TaskIterator* createIterator(int level) override { return nullptr; }
+    TaskIterator* createIterator(int /*level*/) override { return nullptr; }
 };
 
 TEST_CASE("TimeoutMonitor Thread Lifecycle and Shutdown") {
