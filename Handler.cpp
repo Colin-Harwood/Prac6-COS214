@@ -2,7 +2,7 @@
 #include "Task.h"
 #include <iostream>
 
-Handler::Handler(Command* c):next(nullptr),command(c),minLeaf(0),maxLeaf(0){}
+Handler::Handler(Command* c):next(nullptr),minLeaf(0),maxLeaf(0),command(c){}
 Handler::~Handler(){}
 bool Handler::canHandle(int number) const{
     return number >= minLeaf && number <= maxLeaf;
