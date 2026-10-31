@@ -3,11 +3,13 @@
 
 #include <string>
 #include <vector>
+#include "TaskInput.h"
 
 class Director;
 class Task;
 class Handler;
 class Command;
+class LogCommand;
 class LogQueue;
 class TaskSnapshotManager;
 class Target;
@@ -25,6 +27,8 @@ private:
 
     std::vector<Handler*> handlers;
     Command* command;
+    LogCommand* logCommand;
+    std::vector<TaskInput> pending;
     std::vector<Task*> undoTargets;
 
     void buildChain();
@@ -35,7 +39,8 @@ private:
     void collectLevels(Task* node, std::vector<int>& levels);
     void collectLeaves(Task* node, std::vector<Task*>& leaves);
     void printNode(Task* node, int depth);
-    bool dispatch(Task* t);
+    int dispatchLevel(int level);
+    void sendCompletionEmail();
     bool transition(const std::string& taskName, void (Task::*move)());
 
 public:
@@ -56,6 +61,15 @@ public:
     void checkTimeouts();
 
     void setRoot(Task* t);
+
+    bool beginWorkflow(const std::string& name, const std::string& deadline);
+    bool beginGroup(const std::string& name, const std::string& deadline);
+    bool addTask(const std::string& name, const std::string& deadline, int deptLevel, int duration);
+    bool endGroup();
+    bool finishWorkflow();
+
+    void setNotifier(Target* t);
+    bool setNotificationEmail(const std::string& email);
 };
 
 #endif

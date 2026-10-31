@@ -6,19 +6,24 @@
 #include "ConcreteHandlerB.h"
 #include "ConcreteHandlerC.h"
 #include "ExecuteCommand.h"
+#include "LogCommand.h"
+#include "Director.h"
+#include "TaskGroupBuilder.h"
+#include "Target.h"
 #include "LogQueue.h"
 #include "TaskSnapshotManager.h"
 #include "DepartmentTaskIterator.h"
 #include "Observer.h"
 
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 
 TividyFacade::TividyFacade()
     : director(nullptr), root(nullptr), chain(nullptr),
       logQueue(new LogQueue()), snapshotManager(new TaskSnapshotManager()),
-      notifier(nullptr), command(nullptr) {
+      notifier(nullptr), command(nullptr), logCommand(nullptr) {
     buildChain();
 }
 
@@ -30,6 +35,8 @@ TividyFacade::~TividyFacade() {
         delete handlers[i];
     }
     delete command;
+    delete logCommand;
+    delete notifier;
     delete root;
     delete snapshotManager;
 
@@ -44,8 +51,12 @@ void TividyFacade::buildChain() {
     handlers.push_back(new ConcreteHandlerA(command));
     handlers.push_back(new ConcreteHandlerB(command));
     handlers.push_back(new ConcreteHandlerC(command));
-    for (size_t i = 0; i + 1 < handlers.size(); i++) {
-        handlers[i]->setNext(handlers[i + 1]);
+    logCommand = new LogCommand(logQueue, snapshotManager, "workflow.log");
+    for (size_t i = 0; i < handlers.size(); i++) {
+        handlers[i]->setLogCommand(logCommand);
+        if (i + 1 < handlers.size()) {
+            handlers[i]->setNext(handlers[i + 1]);
+        }
     }
     chain = handlers[0];
 }
@@ -53,11 +64,7 @@ void TividyFacade::buildChain() {
 void TividyFacade::attachObservers(Task*) {}
 
 bool TividyFacade::loadWorkflow(const std::string& file) {
-    if (!director) {
-        std::cout << "Cannot load \"" << file << "\": the Builder/Director is not in dev yet." << std::endl;
-        return false;
-    }
-
+    std::cout << "Cannot load \"" << file << "\": loading from a file is not supported yet." << std::endl;
     return false;
 }
 
@@ -80,17 +87,9 @@ void TividyFacade::runWorkflow() {
     std::sort(levels.begin(), levels.end());
     levels.erase(std::unique(levels.begin(), levels.end()), levels.end());
 
+    int ran = 0;
     for (size_t i = 0; i < levels.size(); i++) {
-        std::vector<Task*> batch;
-        DepartmentTaskIterator it(root, levels[i]);
-        for (it.first(); !it.isDone(); it.next()) {
-            if (it.currentItem()->isLeaf()) {
-                batch.push_back(it.currentItem());
-            }
-        }
-        for (size_t j = 0; j < batch.size(); j++) {
-            dispatch(batch[j]);
-        }
+        ran += dispatchLevel(levels[i]);
     }
 
     std::vector<Task*> leaves;
@@ -101,6 +100,9 @@ void TividyFacade::runWorkflow() {
         }
     }
     std::cout << "Workflow finished." << std::endl;
+    if (ran > 0) {
+        sendCompletionEmail();
+    }
 }
 
 void TividyFacade::checkTimeouts() {
@@ -110,32 +112,135 @@ void TividyFacade::checkTimeouts() {
     }
     std::vector<Task*> leaves;
     collectLeaves(root, leaves);
-    int retried = 0;
+    std::vector<int> levels;
     for (size_t i = 0; i < leaves.size(); i++) {
         if (leaves[i]->getStateName() == "TimedOut") {
             std::cout << "Retrying timed-out task: " << leaves[i]->getName() << std::endl;
-            dispatch(leaves[i]);
-            retried++;
+            levels.push_back(leaves[i]->getDepartmentLevel());
         }
     }
-    if (retried == 0) {
+    if (levels.empty()) {
         std::cout << "No timed-out tasks." << std::endl;
+        return;
+    }
+    std::sort(levels.begin(), levels.end());
+    levels.erase(std::unique(levels.begin(), levels.end()), levels.end());
+    for (size_t i = 0; i < levels.size(); i++) {
+        dispatchLevel(levels[i]);
     }
 }
 
-bool TividyFacade::dispatch(Task* t) {
-    std::string before = t->getStateName();
+int TividyFacade::dispatchLevel(int level) {
+    std::vector<Task*> batch;
+    std::vector<std::string> before;
+    DepartmentTaskIterator it(root, level);
+    for (it.first(); !it.isDone(); it.next()) {
+        batch.push_back(it.currentItem());
+        before.push_back(it.currentItem()->getStateName());
+    }
+    if (batch.empty()) {
+        return 0;
+    }
     try {
-        chain->handle(t, t->getDepartmentLevel());
+        chain->handle(root, level);
     } catch (const std::exception& e) {
-        std::cout << "Could not run " << t->getName() << ": " << e.what() << std::endl;
+        std::cout << "Could not run level " << level << ": " << e.what() << std::endl;
+    }
+    for (size_t i = 0; i < batch.size(); i++) {
+        if (batch[i]->getStateName() != before[i]) {
+            undoTargets.push_back(batch[i]);
+        }
+    }
+    return static_cast<int>(batch.size());
+}
+
+bool TividyFacade::beginWorkflow(const std::string& name, const std::string& deadline) {
+    pending.clear();
+    TaskInput workflow;
+    workflow.name = name;
+    workflow.deadline = deadline;
+    workflow.isGroup = true;
+    pending.push_back(workflow);
+    return true;
+}
+
+bool TividyFacade::beginGroup(const std::string& name, const std::string& deadline) {
+    if (pending.empty()) {
+        std::cout << "Call beginWorkflow first." << std::endl;
         return false;
     }
-    if (t->getStateName() != before) {
-        undoTargets.push_back(t);
-        return true;
+    TaskInput group;
+    group.name = name;
+    group.deadline = deadline;
+    group.isGroup = true;
+    pending.push_back(group);
+    return true;
+}
+
+bool TividyFacade::addTask(const std::string& name, const std::string& deadline, int deptLevel, int duration) {
+    if (pending.empty()) {
+        std::cout << "Call beginWorkflow first." << std::endl;
+        return false;
     }
-    return false;
+    TaskInput task;
+    task.name = name;
+    task.deadline = deadline;
+    task.deptLevel = deptLevel;
+    task.duration = duration;
+    pending.back().children.push_back(task);
+    return true;
+}
+
+bool TividyFacade::endGroup() {
+    if (pending.size() < 2) {
+        std::cout << "There is no open group to end." << std::endl;
+        return false;
+    }
+    TaskInput group = pending.back();
+    pending.pop_back();
+    pending.back().children.push_back(group);
+    return true;
+}
+
+bool TividyFacade::finishWorkflow() {
+    if (pending.size() != 1) {
+        std::cout << "Start a workflow and close all its groups first." << std::endl;
+        return false;
+    }
+    TaskGroupBuilder builder;
+    director = new Director(&pending[0], &builder);
+    director->constructTask();
+    delete director;
+    director = nullptr;
+
+    setRoot(builder.getResult());
+    pending.clear();
+    return true;
+}
+
+void TividyFacade::setNotifier(Target* t) {
+    if (t != notifier) {
+        delete notifier;
+    }
+    notifier = t;
+}
+
+bool TividyFacade::setNotificationEmail(const std::string& email) {
+    if (!notifier || email.empty()) {
+        return false;
+    }
+    notifier->setRecipientEmail(email);
+    return true;
+}
+
+void TividyFacade::sendCompletionEmail() {
+    if (!notifier) {
+        return;
+    }
+    std::ifstream file("workflow.log");
+    std::ostringstream log;
+    log << file.rdbuf();
+    notifier->notifyProjectComplete(root, log.str());
 }
 
 void TividyFacade::printWorkflow() {
