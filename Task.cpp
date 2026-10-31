@@ -4,7 +4,7 @@
 #include "PendingState.h"
 #include <algorithm>
 
-Task::Task(const std::string& name, const std::string& deadline): name(name), deadline(deadline), deptLevel(parseDeptLevel(name)),isComplete(false), state(nullptr) {}
+Task::Task(const std::string& name, const std::string& deadline): name(name), deadline(deadline), deptLevel(parseDeptLevel(name)),isComplete(false), state(new PendingState()) {}
 Task::~Task() {}
 
 // Reads the department number from the task this is just for the categorys and saves it in dept num
