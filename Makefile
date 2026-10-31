@@ -18,4 +18,4 @@ $(TEST_TARGET): $(SRC_NO_MAIN) $(TEST_SRC)
 	$(CXX) $(CXXFLAGS) $^ -o $(TEST_TARGET)
 
 clean:
-	rm -f $(TEST_TARGET) report.xmls
+	rm -f $(TEST_TARGET) report.xml
