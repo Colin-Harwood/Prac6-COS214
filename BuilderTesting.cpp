@@ -1,6 +1,5 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
-
 #include "../Director.h"
 #include "../SimpleTask.h"
 #include "../SimpleTaskBuilder.h"
