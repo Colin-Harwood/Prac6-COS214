@@ -5,7 +5,7 @@
 #include <algorithm>
 
 Task::Task(const std::string& name, const std::string& deadline): name(name), deadline(deadline), deptLevel(parseDeptLevel(name)),isComplete(false), state(new PendingState()) {}
-Task::~Task() {}
+Task::~Task() { delete state; }
 
 // Reads the department number from the task this is just for the categorys and saves it in dept num
 int Task::parseDeptLevel(const std::string& taskName) {
