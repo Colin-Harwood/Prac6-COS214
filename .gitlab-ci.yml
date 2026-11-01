@@ -1,5 +1,9 @@
 image: gcc:latest
 
+default:
+  before_script:
+    - apt-get update && apt-get install -y pkg-config libvmime-dev
+
 stages:
   - build
   - test
@@ -7,8 +11,6 @@ stages:
 
 build_job:
   stage: build
-  before_script:
-    - apt-get update && apt-get install -y pkg-config libvmime-dev
   script:
     - make all
   artifacts:
