@@ -69,4 +69,5 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
-".vscode/" 
+".vscode/"
+.env
