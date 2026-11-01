@@ -31,7 +31,6 @@ clean:
 #   make install-gui-deps   install the packages (run once)
 #   make gui                build the GUI program
 #   make run-gui            build if needed, then start it
-#   make setup-env         create .env from .env.example (email settings)
 #   make clean-gui          delete the GUI program
 # =============================================================================
 GUI_TARGET   = tividy_gui
@@ -62,12 +61,7 @@ $(GUI_TARGET): main.cpp $(SRC_NO_MAIN)
 run-gui: $(GUI_TARGET)
 	./$(GUI_TARGET)
 
-# Creates .env only if it does not exist yet, so it never overwrites your real settings.
-setup-env:
-	@test -f .env || { cp .env.example .env; echo "Created .env - open it and fill in your SMTP settings."; }
-	@test ! -f .env || echo ".env is ready."
-
 clean-gui:
 	rm -f $(GUI_TARGET)
 
-.PHONY: install-gui-deps gui run-gui clean-gui setup-env
+.PHONY: install-gui-deps gui run-gui clean-gui
