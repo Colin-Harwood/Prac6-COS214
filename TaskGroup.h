@@ -17,6 +17,9 @@ public:
     void remove(Task* t) override;
     bool isLeaf() const override;
     std::vector<Task*> getChildren() const override;//add to UML
+    // State comes from the children, not a stored state
+    std::string getStateName() const override;
+    bool isFinished() const override;
     TaskGroup(const TaskGroup& other);
     // Prototype
     Task* clone() const override;
