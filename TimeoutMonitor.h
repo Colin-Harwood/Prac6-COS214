@@ -23,9 +23,24 @@ private:
     void clockWatcher();
 
 public:
+    /**
+     * @brief Takes in and stores the task, and then creates the thread
+     */
     TimeoutMonitor(Task* task);
+
+    /**
+     * @brief Safely cleans up thread and memory so no leak
+     */
     ~TimeoutMonitor();
+
+    /**
+     * @brief Updates time to reset thread timeout counter
+     */
     void update();
+
+    /**
+     * @brief Stop counter so thread stops checking for timeout and return
+     */
     void finished();
 };
 
