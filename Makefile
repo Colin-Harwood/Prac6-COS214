@@ -2,7 +2,7 @@ CXX = g++
 # Evaluates whether vmime is already installed via pkg-config
 HAS_VMIME := $(shell pkg-config --exists vmime 2>/dev/null && echo 1 || echo 0)
 
-CXXFLAGS = -std=c++20 -Wall -Wextra -Iinclude -Itests -g $(shell pkg-config --cflags vmime 2>/dev/null)
+CXXFLAGS = -std=c++11 -Wall -Wextra -Iinclude -Itests -g $(shell pkg-config --cflags vmime 2>/dev/null)
 LDFLAGS  = $(shell pkg-config --libs vmime 2>/dev/null)
 
 ALL_SRC     = $(wildcard *.cpp)

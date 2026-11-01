@@ -7,6 +7,8 @@
 #include "../TaskState.h"
 #include "../TaskSnapshotManager.h"
 #include "../TividyFacade.h"
+#include "../Target.h"
+#include <fstream>
 
 template <typename F>
 static std::string quiet(F f) {
@@ -174,3 +176,190 @@ TEST_CASE("Facade: unknown tasks and no workflow") {
     quiet([&] { CHECK(!f.startTask("nope")); });
 }
 
+static void buildSampleWorkflow(TividyFacade& f) {
+    f.beginWorkflow("0.Intake", "2026-11-02");
+    f.addTask("1.Triage", "30", 1, 15);
+    f.beginGroup("0.Assessment", "60");
+    f.addTask("4.Exam", "45", 4, 20);
+    f.endGroup();
+    f.addTask("7.Admit", "90", 7, 10);
+    f.finishWorkflow();
+}
+
+static int countClosedEntries() {
+    std::ifstream file("workflow.log");
+    std::string line;
+    int count = 0;
+    while (std::getline(file, line)) {
+        if (line.find("WORKFLOW CLOSED") != std::string::npos) {
+            count++;
+        }
+    }
+    return count;
+}
+
+class SpyNotifier : public Target {
+public:
+    int projectEmails;
+    int startEmails;
+    std::string lastRecipient;
+    std::string lastEvent;
+    SpyNotifier() : projectEmails(0), startEmails(0) {}
+    void notifyTaskComplete(Task*, std::string) override {}
+    void notifyProjectComplete(Task*, std::string, std::string recipient) override {
+        projectEmails++;
+        lastRecipient = recipient;
+    }
+    void notifyStateChange(Task*, const std::string& event, const std::string& recipient) override {
+        startEmails++;
+        lastEvent = event;
+        lastRecipient = recipient;
+    }
+};
+
+TEST_CASE("Facade: tasks are created in order through the Director") {
+    TividyFacade f;
+    buildSampleWorkflow(f);
+    CHECK(f.getTaskStatus("0.Intake") == "Pending");
+    CHECK(f.getTaskStatus("1.Triage") == "Pending");
+    CHECK(f.getTaskStatus("4.Exam") == "Pending");
+    CHECK(f.getTaskStatus("7.Admit") == "Pending");
+}
+
+TEST_CASE("Facade: task creation refuses calls made out of order") {
+    TividyFacade f;
+    quiet([&] {
+        CHECK(!f.addTask("1.Triage", "30", 1, 15));
+        CHECK(!f.beginGroup("0.Group", "30"));
+        CHECK(!f.endGroup());
+        CHECK(!f.finishWorkflow());
+        CHECK(f.beginWorkflow("0.Intake", "2026-11-02"));
+        CHECK(f.beginGroup("0.Group", "30"));
+        CHECK(!f.finishWorkflow());
+    });
+}
+
+TEST_CASE("Facade: a created workflow runs and closes the log once") {
+    int before = countClosedEntries();
+    TividyFacade f;
+    buildSampleWorkflow(f);
+    quiet([&] { f.runWorkflow(); });
+    CHECK(f.getTaskStatus("1.Triage") == "Completed");
+    CHECK(f.getTaskStatus("4.Exam") == "Completed");
+    CHECK(f.getTaskStatus("7.Admit") == "Completed");
+    CHECK(countClosedEntries() == before + 1);
+}
+
+TEST_CASE("Facade: the log closes when the last task is not on the final handler") {
+    int before = countClosedEntries();
+    TividyFacade f;
+    f.beginWorkflow("0.Intake", "2026-11-02");
+    f.addTask("1.Triage", "30", 1, 15);
+    f.addTask("4.Exam", "45", 4, 20);
+    f.finishWorkflow();
+    quiet([&] { f.runWorkflow(); });
+    CHECK(countClosedEntries() == before + 1);
+}
+
+TEST_CASE("Facade: undo still works after running a level") {
+    TividyFacade f;
+    buildSampleWorkflow(f);
+    quiet([&] { f.runWorkflow(); });
+    quiet([&] { CHECK(f.undoLast()); });
+    CHECK(f.getTaskStatus("7.Admit") == "Pending");
+}
+
+TEST_CASE("Facade: finishing a workflow sends one email to the chosen address") {
+    TividyFacade f;
+    CHECK(!f.setNotificationEmail("student@example.com"));
+    SpyNotifier* spy = new SpyNotifier();
+    f.setNotifier(spy);
+    CHECK(f.setNotificationEmail("student@example.com"));
+    CHECK(!f.setNotificationEmail(""));
+    buildSampleWorkflow(f);
+    quiet([&] { f.runWorkflow(); f.runWorkflow(); });
+    CHECK(spy->startEmails == 1);
+    CHECK(spy->lastEvent == "Workflow started");
+    CHECK(spy->projectEmails == 1);
+    CHECK(spy->lastRecipient == "student@example.com");
+}
+
+TEST_CASE("Facade: the first facade action sends one start email") {
+    TividyFacade f;
+    SpyNotifier* spy = new SpyNotifier();
+    f.setNotifier(spy);
+    CHECK(f.setNotificationEmail("student@example.com"));
+    f.beginWorkflow("0.Intake", "2026-11-02");
+    f.addTask("1.Triage", "30", 1, 15);
+    f.addTask("4.Exam", "45", 4, 20);
+    f.finishWorkflow();
+    CHECK(spy->startEmails == 0);
+    quiet([&] { CHECK(!f.startTask("9.Missing")); });
+    CHECK(spy->startEmails == 0);
+    quiet([&] { f.completeTask("1.Triage"); });
+    CHECK(spy->startEmails == 1);
+    CHECK(spy->projectEmails == 0);
+    quiet([&] { f.cancelTask("4.Exam"); });
+    CHECK(spy->startEmails == 1);
+    CHECK(spy->projectEmails == 1);
+}
+
+TEST_CASE("Facade: finishing the last task through a facade action sends one email") {
+    TividyFacade f;
+    SpyNotifier* spy = new SpyNotifier();
+    f.setNotifier(spy);
+    CHECK(f.setNotificationEmail("student@example.com"));
+    f.beginWorkflow("0.Intake", "2026-11-02");
+    f.addTask("1.Triage", "30", 1, 15);
+    f.addTask("4.Exam", "45", 4, 20);
+    f.finishWorkflow();
+    quiet([&] {
+        f.completeTask("1.Triage");
+        CHECK(spy->projectEmails == 0);
+        f.cancelTask("4.Exam");
+        f.runWorkflow();
+    });
+    CHECK(spy->projectEmails == 1);
+}
+
+TEST_CASE("Facade: the log closes when a facade action finishes the last task") {
+    int before = countClosedEntries();
+    TividyFacade f;
+    f.beginWorkflow("0.Intake", "2026-11-02");
+    f.addTask("1.Triage", "30", 1, 15);
+    f.addTask("4.Exam", "45", 4, 20);
+    f.finishWorkflow();
+    quiet([&] {
+        CHECK(f.completeTask("1.Triage"));
+        CHECK(f.cancelTask("4.Exam"));
+    });
+    CHECK(countClosedEntries() == before + 1);
+}
+
+TEST_CASE("Facade: actions are logged and showLog keeps them in the file") {
+    TividyFacade f;
+    buildSampleWorkflow(f);
+    quiet([&] {
+        f.startTask("1.Triage");
+        f.rejectTask("1.Triage");
+        f.reopenTask("1.Triage");
+        f.cancelTask("4.Exam");
+    });
+    std::string first = quiet([&] { f.showLog(); });
+    CHECK(first.find("STARTED: 1.Triage") != std::string::npos);
+    CHECK(first.find("REJECTED: 1.Triage") != std::string::npos);
+    CHECK(first.find("REOPENED: 1.Triage") != std::string::npos);
+    CHECK(first.find("CANCELLED: 4.Exam") != std::string::npos);
+    std::string second = quiet([&] { f.showLog(); });
+    CHECK(second.find("STARTED: 1.Triage") != std::string::npos);
+}
+
+TEST_CASE("Facade: addTask refuses a level no handler can take") {
+    TividyFacade f;
+    quiet([&] {
+        f.beginWorkflow("0.Intake", "2026-11-02");
+        CHECK(!f.addTask("0.Nothing", "30", 0, 15));
+        CHECK(!f.addTask("10.Nothing", "30", 10, 15));
+        CHECK(f.addTask("9.Last", "30", 9, 15));
+    });
+}
