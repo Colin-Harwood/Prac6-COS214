@@ -5,14 +5,19 @@
 #include <GLFW/glfw3.h>
 
 #include <cstdio>
+#include <cstdlib>   // atoi
 #include <cstring>
+#include <fstream>   // reading the .env file
 #include <iostream>
+#include <map>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "TividyFacade.h"   // the ONE backend class the GUI talks to (Facade pattern)
+#include "VMimeEmailAdapter.h"   // the notifier the facade sends emails through
+#include "VMimeMailer.h"         // does the actual SMTP sending
 
 // PART 1: THE GUI'S OWN DATA
 
@@ -29,7 +34,7 @@ struct HandlerData {
     char levelNames[9][64];
 
     char recipientEmail[128];   // what the user is typing
-    std::string savedEmail;     // what they submitted (GUI-only for now; email is not wired to the backend yet)
+    std::string savedEmail;     // what they submitted; passed to the facade when Run is clicked
     std::string emailStatus;    // feedback line shown under the button
 
     HandlerData() {
@@ -102,16 +107,19 @@ static std::string backendName(const TaskEntry& entry) {
     return out.str();
 }
 
-// The facade prints with std::cout. This object points cout at our own buffer for as long as it lives,
-// then puts the old buffer back in its destructor (even if an exception is thrown).
-class CoutCapture {
+// The facade prints with std::cout, and the mailer reports errors on std::cerr. This object points a stream
+// (cout or cerr) at our own buffer for as long as it lives, then puts the old buffer back in its destructor
+// (even if an exception is thrown).
+class StreamCapture {
 public:
-    explicit CoutCapture(std::ostringstream& target) : old(std::cout.rdbuf(target.rdbuf())) {}
-    ~CoutCapture() { std::cout.rdbuf(old); }
+    StreamCapture(std::ostream& stream, std::ostringstream& target)
+        : stream(stream), old(stream.rdbuf(target.rdbuf())) {}
+    ~StreamCapture() { stream.rdbuf(old); }
 private:
+    std::ostream& stream;
     std::streambuf* old;
-    CoutCapture(const CoutCapture&);              // not copyable (C++11 style without "= delete" noise)
-    CoutCapture& operator=(const CoutCapture&);
+    StreamCapture(const StreamCapture&);              // not copyable (C++11 style without "= delete" noise)
+    StreamCapture& operator=(const StreamCapture&);
 };
 
 // Checks the user's entries before we send anything. Returns "" when fine, otherwise a message for the console.
@@ -160,9 +168,91 @@ static void addConsoleText(OutputData& out, const std::string& text) {
     out.scrollToBottom = true;
 }
 
+// ---- Email settings from the .env file
+// The SMTP settings (and the password) live in a file called .env next to the program, NOT in the source code,
+// so they never end up in the repository. Copy .env.example to .env and fill it in.
+struct EmailSettings {
+    std::string host;
+    int port;
+    std::string sender;
+    std::string username;   // optional: leave empty if the server needs no login
+    std::string password;
+    EmailSettings() : port(0) {}
+};
+
+// Removes spaces, tabs and line endings (\r from Windows files) from both ends of a string.
+static std::string trim(const std::string& text) {
+    const char* whitespace = " \t\r\n";
+    size_t first = text.find_first_not_of(whitespace);
+    if (first == std::string::npos) return "";
+    size_t last = text.find_last_not_of(whitespace);
+    return text.substr(first, last - first + 1);
+}
+
+// Reads lines like KEY=value (blank lines and lines starting with # are ignored).
+// Returns false, with a message in "problem", if the file is missing or a required setting is empty.
+static bool loadEmailSettings(const std::string& path, EmailSettings& settings, std::string& problem) {
+    std::ifstream file(path.c_str());
+    if (!file) {
+        problem = "could not open " + path + " (copy .env.example to .env and fill it in)";
+        return false;
+    }
+    std::map<std::string, std::string> values;
+    std::string line;
+    while (std::getline(file, line)) {
+        line = trim(line);
+        if (line.empty() || line[0] == '#') continue;
+        size_t equals = line.find('=');
+        if (equals == std::string::npos) continue;
+        std::string key = trim(line.substr(0, equals));
+        std::string value = trim(line.substr(equals + 1));
+        // Allow "value" or 'value' with quotes around it.
+        if (value.size() >= 2 && (value[0] == '"' || value[0] == '\'') && value[value.size() - 1] == value[0]) {
+            value = value.substr(1, value.size() - 2);
+        }
+        values[key] = value;
+    }
+    settings.host     = values["SMTP_HOST"];
+    settings.port     = std::atoi(values["SMTP_PORT"].c_str());
+    settings.sender   = values["SMTP_SENDER"];
+    settings.username = values["SMTP_USERNAME"];
+    settings.password = values["SMTP_PASSWORD"];
+    if (settings.host.empty() || settings.port <= 0 || settings.sender.empty()) {
+        problem = "SMTP_HOST, SMTP_PORT and SMTP_SENDER must be set in " + path;
+        return false;
+    }
+    return true;
+}
+
+// Gives the facade a notifier so it can send emails while the workflow runs.
+// The facade OWNS the notifier (it deletes it), but the adapter does NOT own the mailer, so the caller keeps
+// the mailer alive for as long as the facade exists.
+static void setUpEmail(TividyFacade& facade, std::unique_ptr<VMimeMailer>& mailer, const std::string& recipient) {
+    if (recipient.empty()) {
+        std::cout << "No recipient email submitted: no emails will be sent." << std::endl;
+        return;
+    }
+    EmailSettings settings;
+    std::string problem;
+    if (!loadEmailSettings(".env", settings, problem)) {
+        std::cout << "Emails are off: " << problem << "." << std::endl;
+        return;
+    }
+    mailer.reset(new VMimeMailer(settings.host, settings.port));
+    if (!settings.username.empty()) {
+        mailer->setCredentials(settings.username, settings.password);
+    }
+    facade.setNotifier(new VMimeEmailAdapter(mailer.get(), settings.sender, ""));
+    if (facade.setNotificationEmail(recipient)) {   // the GUI's recipient input goes down here
+        std::cout << "Emails will be sent to " << recipient << "." << std::endl;
+    } else {
+        std::cout << "The facade did not accept the recipient email." << std::endl;
+    }
+}
+
 // Builds the workflow from the Task tab and runs it. Called when "Run Workflow" is clicked.
 // Note: this blocks the window until the workflow finishes (fine for small workflows).
-static void runWorkflowFromGui(const TaskData& tasks, OutputData& out) {
+static void runWorkflowFromGui(const TaskData& tasks, const std::string& recipientEmail, OutputData& out) {
     out.lines.push_back("=== Run ===");
 
     if (tasks.entries.empty()) {
@@ -180,10 +270,15 @@ static void runWorkflowFromGui(const TaskData& tasks, OutputData& out) {
 
     std::ostringstream captured;
     {
-        CoutCapture capture(captured);   // everything the facade prints now lands in "captured"
+        StreamCapture captureOut(std::cout, captured);   // everything the facade prints now lands in "captured"
+        StreamCapture captureErr(std::cerr, captured);   // ...and so do the mailer's error messages
         try {
+            // Declared BEFORE the facade on purpose: variables are destroyed in reverse order, so the facade
+            // (which uses the mailer through its notifier) is destroyed first and the mailer last.
+            std::unique_ptr<VMimeMailer> mailer;
             // A fresh facade per run: no leftover tree, undo list or snapshots from an earlier run.
             std::unique_ptr<TividyFacade> facade(new TividyFacade());
+            setUpEmail(*facade, mailer, recipientEmail);
 
             bool built = facade->beginWorkflow(tasks.workflowName, tasks.workflowDeadline)
                       && submitEntries(*facade, tasks.entries)
@@ -248,14 +343,14 @@ static void drawHandlerTab(HandlerData& data) {
 
     ImGui::InputText("Recipient email", data.recipientEmail, sizeof(data.recipientEmail));
     // Button() is true only on the frame it is clicked.
-    // Email is skipped for now (the facade has no notifier yet), so we only remember the address here.
+    // This only remembers the address. The emails themselves are sent while the workflow runs.
     if (ImGui::Button("submit email")) {
         std::string email = data.recipientEmail;
         if (email.find('@') == std::string::npos) {
             data.emailStatus = "That does not look like an email address (missing @).";
         } else {
             data.savedEmail = email;
-            data.emailStatus = "Saved (GUI only): " + email;
+            data.emailStatus = "Saved: " + email + " (emails are sent when the workflow runs)";
         }
     }
     if (!data.emailStatus.empty()) {
@@ -375,7 +470,7 @@ static void drawTaskTab(TaskData& data, const HandlerData& handlers) {
 
 // ---- Run and Output tab
 // Draws the Run and Output tab: a scrolling console and the Run button.
-static void drawOutputTab(OutputData& data, const TaskData& tasks) {
+static void drawOutputTab(OutputData& data, const TaskData& tasks, const HandlerData& handlers) {
     // Reserve one row at the bottom for the button; the console fills the rest.
     float footerHeight = ImGui::GetFrameHeightWithSpacing() + ImGui::GetStyle().ItemSpacing.y;
 
@@ -391,7 +486,7 @@ static void drawOutputTab(OutputData& data, const TaskData& tasks) {
     ImGui::EndChild();
 
     if (ImGui::Button("Run Workflow")) {
-        runWorkflowFromGui(tasks, data);
+        runWorkflowFromGui(tasks, handlers.savedEmail, data);
     }
     ImGui::SameLine();
     if (ImGui::Button("Clear console")) {
@@ -426,7 +521,7 @@ static void drawTividyGui() {
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Run and Output")) {
-            drawOutputTab(outputData, taskData);
+            drawOutputTab(outputData, taskData, handlerData);
             ImGui::EndTabItem();
         }
 
