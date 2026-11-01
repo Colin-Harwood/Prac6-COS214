@@ -1,0 +1,51 @@
+image: gcc:latest
+
+default:
+  before_script:
+    - apt-get update && apt-get install -y pkg-config libvmime-dev
+
+stages:
+  - build
+  - test
+  - notify
+
+build_job:
+  stage: build
+  script:
+    - make all
+  artifacts:
+    paths:
+      - unit_tests
+    expire_in: 1 hour
+
+test_job:
+  stage: test
+  script:
+    - chmod +x ./unit_tests
+    - ./unit_tests -r=xml -out=report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+
+notify_github_success:
+  stage: notify
+  when: on_success
+  script:
+    - |
+      curl -X POST \
+        -H "Authorization: token $GH_TOKEN" \
+        -H "Accept: application/vnd.github.v3+json" \
+        https://api.github.com/repos/Colin-Harwood/Prac6-COS214/statuses/$CI_COMMIT_SHA \
+        -d "{\"state\": \"success\", \"target_url\": \"$CI_PIPELINE_URL\", \"description\": \"GitLab CI pipeline passed\", \"context\": \"gitlab-ci\"}"
+
+notify_github_failure:
+  stage: notify
+  when: on_failure
+  script:
+    - |
+      curl -X POST \
+        -H "Authorization: token $GH_TOKEN" \
+        -H "Accept: application/vnd.github.v3+json" \
+        https://api.github.com/repos/Colin-Harwood/Prac6-COS214/statuses/$CI_COMMIT_SHA \
+        -d "{\"state\": \"failure\", \"target_url\": \"$CI_PIPELINE_URL\", \"description\": \"GitLab CI pipeline failed\", \"context\": \"gitlab-ci\"}"
