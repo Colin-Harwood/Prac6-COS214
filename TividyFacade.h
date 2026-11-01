@@ -3,15 +3,16 @@
 
 #include <string>
 #include <vector>
+#include "TaskInput.h"
 
 class Director;
 class Task;
 class Handler;
 class Command;
+class LogCommand;
 class LogQueue;
 class TaskSnapshotManager;
 class Target;
-class Observer;
 
 class TividyFacade {
 private:
@@ -21,22 +22,26 @@ private:
     LogQueue* logQueue;
     TaskSnapshotManager* snapshotManager;
     Target* notifier;
-    std::vector<Observer*> monitors;
 
     std::vector<Handler*> handlers;
     Command* command;
+    LogCommand* logCommand;
+    std::vector<TaskInput> pending;
     std::vector<Task*> undoTargets;
+    bool workflowStarted;
 
     void buildChain();
-    void attachObservers(Task* t);
     Task* findTask(const std::string& taskName);
 
     Task* findIn(Task* node, const std::string& taskName);
     void collectLevels(Task* node, std::vector<int>& levels);
     void collectLeaves(Task* node, std::vector<Task*>& leaves);
     void printNode(Task* node, int depth);
-    bool dispatch(Task* t);
-    bool transition(const std::string& taskName, void (Task::*move)());
+    int dispatchLevel(int level);
+    void sendStartEmail();
+    void sendCompletionEmail();
+    bool transition(const std::string& taskName, void (Task::*move)(), const std::string& action);
+    void closeLogIfFinished();
 
 public:
     TividyFacade();
@@ -56,6 +61,15 @@ public:
     void checkTimeouts();
 
     void setRoot(Task* t);
+
+    bool beginWorkflow(const std::string& name, const std::string& deadline);
+    bool beginGroup(const std::string& name, const std::string& deadline);
+    bool addTask(const std::string& name, const std::string& deadline, int deptLevel, int duration);
+    bool endGroup();
+    bool finishWorkflow();
+
+    void setNotifier(Target* t);
+    bool setNotificationEmail(const std::string& email);
 };
 
 #endif

@@ -6,12 +6,30 @@
 #include "../ConcreteHandlerA.h"
 #include "../ConcreteHandlerB.h"
 #include "../ConcreteHandlerC.h"
+#include "../LogQueue.h"
+#include "../TaskSnapshotManager.h"
+#include "../ExecuteCommand.h"
+
+struct CmdFixture {
+    LogQueue queue;
+    TaskSnapshotManager snaps;
+    ExecuteCommand cmd;
+    CmdFixture() : cmd(&queue, &snaps) {}
+};
+
+// Restores cout even if handle() throws
+struct CoutGuard {
+    std::streambuf* old;
+    explicit CoutGuard(std::streambuf* b) : old(std::cout.rdbuf(b)) {}
+    ~CoutGuard() { std::cout.rdbuf(old); }
+};
 
 static std::string run(Handler& h, Task* t, int number) {
     std::ostringstream captured;
-    std::streambuf* old = std::cout.rdbuf(captured.rdbuf());
-    h.handle(t, number);
-    std::cout.rdbuf(old);
+    {
+        CoutGuard guard(captured.rdbuf());
+        h.handle(t, number);
+    }
     return captured.str();
 }
 
@@ -20,9 +38,10 @@ static bool has(const std::string& s, const std::string& part) {
 }
 
 TEST_CASE("Handler canHandle ranges") {
-    ConcreteHandlerA a;
-    ConcreteHandlerB b;
-    ConcreteHandlerC c;
+    CmdFixture f;
+    ConcreteHandlerA a(&f.cmd);
+    ConcreteHandlerB b(&f.cmd);
+    ConcreteHandlerC c(&f.cmd);
 
     CHECK(!a.canHandle(0));
     CHECK(a.canHandle(1));
@@ -38,9 +57,10 @@ TEST_CASE("Handler canHandle ranges") {
 }
 
 TEST_CASE("Chain routes each category to the right handler") {
-    ConcreteHandlerA a;
-    ConcreteHandlerB b;
-    ConcreteHandlerC c;
+    CmdFixture f;
+    ConcreteHandlerA a(&f.cmd);
+    ConcreteHandlerB b(&f.cmd);
+    ConcreteHandlerC c(&f.cmd);
     a.setNext(&b);
     b.setNext(&c);
 
@@ -61,9 +81,10 @@ TEST_CASE("Chain routes each category to the right handler") {
 }
 
 TEST_CASE("Chain: unhandled categories") {
-    ConcreteHandlerA a;
-    ConcreteHandlerB b;
-    ConcreteHandlerC c;
+    CmdFixture f;
+    ConcreteHandlerA a(&f.cmd);
+    ConcreteHandlerB b(&f.cmd);
+    ConcreteHandlerC c(&f.cmd);
     a.setNext(&b);
     b.setNext(&c);
 
@@ -77,7 +98,8 @@ TEST_CASE("Chain: unhandled categories") {
 }
 
 TEST_CASE("Lone handler passes nothing on") {
-    ConcreteHandlerA lone;
+    CmdFixture f;
+    ConcreteHandlerA lone(&f.cmd);
     SimpleTask t8("8.Category", "d", 8);
     SimpleTask t1("1.Category", "d", 1);
 

@@ -10,8 +10,10 @@ std::string Command::describe() const {
 }
 
 void Command::record(Task* t, const std::string& act) {
-    this->taskName = t->getName();
+    this->taskName = t ? t->getName() : "";
     this->action = act;
     // Push a frozen, independent copy. The queue takes ownership.
-    this->logQueue->push(this->clone());
+    if (this->logQueue) {
+        this->logQueue->push(this->clone());
+    }
 }
