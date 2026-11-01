@@ -1,3 +1,7 @@
+/**
+ * @file VMimeEmailAdapter.h
+ * @brief Adapter connecting Task notifications to VMimeMailer.
+ */
 
 #ifndef VMIMEEMAILADAPTER_H
 #define VMIMEEMAILADAPTER_H

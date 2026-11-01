@@ -1,3 +1,8 @@
+/**
+ * @file LogCommand.h
+ * @brief Command for logging workflow execution to a file.
+ */
+
 #ifndef LOG_COMMAND_H
 #define LOG_COMMAND_H
 
@@ -6,6 +11,9 @@
 #include <memory>
 #include <fstream>
 
+/**
+ * @brief Command that writes workflow log entries to a file.
+ */
 class LogCommand : public Command {
 public:
     /**

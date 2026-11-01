@@ -1,9 +1,19 @@
+/**
+ * @file TaskGroup.h
+ * @brief Composite task class representing a group of subtasks.
+ */
+
 #ifndef TASKGROUP_H
 #define TASKGROUP_H
 
 #include "Task.h"
 #include <vector>
+
 class TaskGroupBuilder;
+
+/**
+ * @brief Composite task that manages a collection of child tasks.
+ */
 class TaskGroup : public Task {
     friend class TaskGroupBuilder;
 private:
@@ -32,6 +42,9 @@ public:
     bool isFinished() const override;
     TaskGroup(const TaskGroup& other);
     // Prototype
+    /**
+     * @brief Clones the TaskGroup (Prototype pattern).
+     */
     Task* clone() const override;
     TaskIterator* createIterator(int level) override;
 };

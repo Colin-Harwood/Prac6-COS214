@@ -1,3 +1,8 @@
+/**
+ * @file Observer.h
+ * @brief Defines the Observer interface for watching task state changes.
+ */
+
 #ifndef OBSERVER_H
 #define OBSERVER_H
 

@@ -1,3 +1,8 @@
+/**
+ * @file Builder.h
+ * @brief Base Builder interface for constructing Task objects.
+ */
+
 #ifndef BUILDER_H
 #define BUILDER_H
 
@@ -16,26 +21,26 @@ class TaskState;
  */
 class Builder {
 public:
-    /// Constructs a base builder.
+    /// @brief Constructs a base builder.
     Builder();
-    /// Destroys the builder.
+    /// @brief Destroys the builder.
     virtual ~Builder();
-    /// Sets the task name.
+    /// @brief Sets the task name.
     virtual void setName(std::string name);
-    /// Sets the task deadline.
+    /// @brief Sets the task deadline.
     virtual void setDeadline(std::string deadline);
-    /// Sets the task duration.
+    /// @brief Sets the task duration.
     virtual void setDuration(int duration);
-    /// Sets the task's children.
+    /// @brief Sets the task's children.
     virtual void setChildren(std::vector<Task*> children);
-    /// Sets the task's department level.
+    /// @brief Sets the task's department level.
     virtual void setDeptLevel(int deptLevel);
-    /// Sets whether the task is complete.
+    /// @brief Sets whether the task is complete.
     virtual void setComplete(bool complete);
-    /// Sets the task state.
+    /// @brief Sets the task state.
     virtual void setState(TaskState* state);
 
-    /// Returns the task being built, or nullptr in the base implementation.
+    /// @brief Returns the task being built, or nullptr in the base implementation.
     virtual Task* getResult();
 };
 

@@ -1,3 +1,8 @@
+/**
+ * @file VMimeMailer.h
+ * @brief Low-level SMTP client using VMime for email transmission.
+ */
+
 #ifndef VMIMEMAILER_H
 #define VMIMEMAILER_H
 

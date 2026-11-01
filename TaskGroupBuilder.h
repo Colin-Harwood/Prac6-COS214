@@ -1,3 +1,8 @@
+/**
+ * @file TaskGroupBuilder.h
+ * @brief Builder for creating TaskGroup objects.
+ */
+
 #ifndef TASKGROUPBUILDER_H
 #define TASKGROUPBUILDER_H
 
@@ -12,25 +17,25 @@ private:
     TaskGroup* task;
 
 public:
-    /// Creates a builder with a new, initially empty TaskGroup.
+    /// @brief Creates a builder with a new, initially empty TaskGroup.
     TaskGroupBuilder();
-    /// Destroys the builder.
+    /// @brief Destroys the builder.
     virtual ~TaskGroupBuilder();
 
-    /// Sets the task group name.
+    /// @brief Sets the task group name.
     void setName(std::string name) override;
-    /// Sets the task group deadline.
+    /// @brief Sets the task group deadline.
     void setDeadline(std::string deadline) override;
-    /// Sets the task group's department level.
+    /// @brief Sets the task group's department level.
     void setDeptLevel(int deptLevel) override;
-    /// Sets whether the task group is complete.
+    /// @brief Sets whether the task group is complete.
     void setComplete(bool complete) override;
-    /// Sets the task group's state.
+    /// @brief Sets the task group's state.
     void setState(TaskState* state) override;
-    /// Adds the given tasks as children of the group.
+    /// @brief Adds the given tasks as children of the group.
     void setChildren(std::vector<Task*> children) override;
 
-    /// Returns the TaskGroup being built.
+    /// @brief Returns the TaskGroup being built.
     TaskGroup* getResult() override;
 };
 

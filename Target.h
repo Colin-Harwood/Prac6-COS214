@@ -1,3 +1,8 @@
+/**
+ * @file Target.h
+ * @brief Abstract Target interface for notification adapters.
+ */
+
 #ifndef TARGET_H
 #define TARGET_H
 

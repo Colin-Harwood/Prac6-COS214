@@ -1,3 +1,8 @@
+/**
+ * @file TaskInput.h
+ * @brief Data structure holding input parameters for building tasks.
+ */
+
 #ifndef TASKINPUT_H
 #define TASKINPUT_H
 
@@ -13,21 +18,21 @@ class TaskState;
  * group or a simple leaf task. Group inputs can contain nested children.
  */
 struct TaskInput {
-    /// Task name.
+    /// @brief Task name.
     std::string name;
-    /// Task deadline.
+    /// @brief Task deadline.
     std::string deadline;
-    /// Department level associated with the task.
+    /// @brief Department level associated with the task.
     int deptLevel = 0;
-    /// State to assign to the task.
+    /// @brief State to assign to the task.
     TaskState* state = nullptr;
-    /// Whether this input describes a task group rather than a simple task.
+    /// @brief Whether this input describes a task group rather than a simple task.
     bool isGroup = false;
-    /// Duration of a simple task.
+    /// @brief Duration of a simple task.
     int duration = 0;
-    /// Whether the task is complete.
+    /// @brief Whether the task is complete.
     bool complete = false;
-    /// Child task descriptions; used for groups.
+    /// @brief Child task descriptions; used for groups.
     std::vector<TaskInput> children;
 };
 
