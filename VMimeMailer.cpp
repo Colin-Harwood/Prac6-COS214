@@ -16,9 +16,9 @@ namespace
             (void)chain;
             (void)hostname;
         }
-        
+
         virtual void verify(
-            vmime::shared_ptr<vmime::security::cert::certificateChain> chain,
+            vmime::shared_ptr<q vmime::security::cert::certificateChain> chain,
             const vmime::string &hostname) override
         {
             (void)chain;
