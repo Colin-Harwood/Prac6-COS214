@@ -363,3 +363,86 @@ TEST_CASE("Facade: addTask refuses a level no handler can take") {
         CHECK(f.addTask("9.Last", "30", 9, 15));
     });
 }
+
+TEST_CASE("Composite: a group's state comes from its children") {
+    TaskGroup empty("0.Empty", "d");
+    CHECK(empty.getStateName() == "Pending");
+    CHECK(!empty.isFinished());
+
+    TaskGroup group("0.Group", "d");
+    SimpleTask* first = new SimpleTask("1.First", "d", 5);
+    SimpleTask* second = new SimpleTask("2.Second", "d", 5);
+    group.add(first);
+    group.add(second);
+    CHECK(group.getStateName() == "Pending");
+
+    first->start();
+    CHECK(group.getStateName() == "InProgress");
+    first->complete();
+    CHECK(group.getStateName() == "InProgress");
+    CHECK(!group.isFinished());
+
+    second->cancel();
+    CHECK(group.getStateName() == "Completed");
+    CHECK(group.isFinished());
+}
+
+TEST_CASE("Composite: rejected and cancelled children set the group's state") {
+    TaskGroup rejected("0.Rejected", "d");
+    SimpleTask* task = new SimpleTask("1.Task", "d", 5);
+    rejected.add(task);
+    task->start();
+    task->reject();
+    CHECK(rejected.getStateName() == "InProgress");
+    CHECK(!rejected.isFinished());
+
+    TaskGroup cancelled("0.Cancelled", "d");
+    SimpleTask* one = new SimpleTask("1.One", "d", 5);
+    SimpleTask* two = new SimpleTask("2.Two", "d", 5);
+    cancelled.add(one);
+    cancelled.add(two);
+    one->cancel();
+    two->cancel();
+    CHECK(cancelled.getStateName() == "Cancelled");
+    CHECK(cancelled.isFinished());
+}
+
+TEST_CASE("Composite: nested groups and a copied group report the right state") {
+    TaskGroup outer("0.Outer", "d");
+    TaskGroup* inner = new TaskGroup("1.Inner", "d");
+    SimpleTask* task = new SimpleTask("2.Task", "d", 5);
+    inner->add(task);
+    outer.add(inner);
+    task->start();
+    CHECK(outer.getStateName() == "InProgress");
+    Task* copy = outer.clone();
+    task->complete();
+    CHECK(outer.getStateName() == "Completed");
+    CHECK(copy->getStateName() == "InProgress");
+    delete copy;
+}
+
+TEST_CASE("Facade: group status follows its tasks and group actions are refused") {
+    TividyFacade f;
+    quiet([&] {
+        f.beginWorkflow("0.Intake", "2026-11-02");
+        f.beginGroup("Front desk", "2026-11-02");
+        f.addTask("1.Triage", "30", 1, 15);
+        f.endGroup();
+        f.finishWorkflow();
+    });
+    CHECK(f.getTaskStatus("Front desk") == "Pending");
+    quiet([&] {
+        CHECK(!f.startTask("Front desk"));
+        CHECK(!f.rejectTask("Front desk"));
+        CHECK(!f.cancelTask("Front desk"));
+        CHECK(!f.reopenTask("Front desk"));
+        CHECK(!f.completeTask("Front desk"));
+        CHECK(!f.undoLast());
+    });
+    CHECK(f.getTaskStatus("Front desk") == "Pending");
+    quiet([&] { f.runWorkflow(); });
+    CHECK(f.getTaskStatus("1.Triage") == "Completed");
+    CHECK(f.getTaskStatus("Front desk") == "Completed");
+    CHECK(f.getTaskStatus("0.Intake") == "Completed");
+}

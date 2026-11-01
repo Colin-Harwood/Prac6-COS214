@@ -44,6 +44,42 @@ bool TaskGroup::isLeaf() const{
 std::vector<Task*> TaskGroup::getChildren() const{
     return children;
 }
+// Worked out from the children each time it is asked for
+std::string TaskGroup::getStateName() const{
+    if (children.empty()){
+        return "Pending";
+    }
+    bool allCancelled = true;
+    bool anyStarted = false;
+    for (const Task* child : children){
+        const std::string childState = child->getStateName();
+        if (childState != "Cancelled"){
+            allCancelled = false;
+        }
+        if (childState != "Pending"){
+            anyStarted = true;
+        }
+    }
+    if (allCancelled){
+        return "Cancelled";
+    }
+    if (isFinished()){
+        return "Completed";
+    }
+    return anyStarted ? "InProgress" : "Pending";
+}
+// An empty group has no finished work
+bool TaskGroup::isFinished() const{
+    if (children.empty()){
+        return false;
+    }
+    for (const Task* child : children){
+        if (!child->isFinished()){
+            return false;
+        }
+    }
+    return true;
+}
 TaskGroup::TaskGroup(const TaskGroup& other)
     : Task(other) {
     // Deep copy children

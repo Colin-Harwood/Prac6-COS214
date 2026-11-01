@@ -301,6 +301,10 @@ bool TividyFacade::transition(const std::string& taskName, void (Task::*move)(),
         std::cout << "No task named \"" << taskName << "\"." << std::endl;
         return false;
     }
+    if (!t->isLeaf()) {
+        std::cout << "\"" << taskName << "\" is a group, so its status comes from its tasks." << std::endl;
+        return false;
+    }
     snapshotManager->addSnapshot(t);
     try {
         (t->*move)();
