@@ -28,6 +28,7 @@ private:
     LogCommand* logCommand;
     std::vector<TaskInput> pending;
     std::vector<Task*> undoTargets;
+    bool workflowStarted;
 
     void buildChain();
     Task* findTask(const std::string& taskName);
@@ -37,6 +38,7 @@ private:
     void collectLeaves(Task* node, std::vector<Task*>& leaves);
     void printNode(Task* node, int depth);
     int dispatchLevel(int level);
+    void sendStartEmail();
     void sendCompletionEmail();
     bool transition(const std::string& taskName, void (Task::*move)(), const std::string& action);
     void closeLogIfFinished();

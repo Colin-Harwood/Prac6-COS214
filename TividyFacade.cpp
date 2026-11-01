@@ -33,7 +33,7 @@ public:
 TividyFacade::TividyFacade()
     : director(nullptr), root(nullptr), chain(nullptr),
       logQueue(new LogQueue()), snapshotManager(new TaskSnapshotManager()),
-      notifier(nullptr), command(nullptr), logCommand(nullptr) {
+      notifier(nullptr), command(nullptr), logCommand(nullptr), workflowStarted(false) {
     buildChain();
 }
 
@@ -77,6 +77,7 @@ void TividyFacade::setRoot(Task* t) {
     delete root;
     root = t;
     undoTargets.clear();
+    workflowStarted = false;
 }
 
 void TividyFacade::runWorkflow() {
@@ -89,6 +90,7 @@ void TividyFacade::runWorkflow() {
     std::sort(levels.begin(), levels.end());
     levels.erase(std::unique(levels.begin(), levels.end()), levels.end());
 
+    sendStartEmail();
     int ran = 0;
     for (size_t i = 0; i < levels.size(); i++) {
         ran += dispatchLevel(levels[i]);
@@ -239,6 +241,16 @@ bool TividyFacade::setNotificationEmail(const std::string& email) {
     return true;
 }
 
+void TividyFacade::sendStartEmail() {
+    if (workflowStarted) {
+        return;
+    }
+    workflowStarted = true;
+    if (notifier) {
+        notifier->notifyStateChange(root, "Workflow started");
+    }
+}
+
 void TividyFacade::sendCompletionEmail() {
     if (!notifier) {
         return;
@@ -299,6 +311,7 @@ bool TividyFacade::transition(const std::string& taskName, void (Task::*move)(),
     }
     undoTargets.push_back(t);
     ActionLog(logQueue, snapshotManager).log(t, action);
+    sendStartEmail();
     closeLogIfFinished();
     return true;
 }
@@ -330,6 +343,7 @@ bool TividyFacade::completeTask(const std::string& taskName) {
             return false;
         }
         undoTargets.push_back(t);
+        sendStartEmail();
         closeLogIfFinished();
         return true;
     }

@@ -201,14 +201,20 @@ static int countClosedEntries() {
 class SpyNotifier : public Target {
 public:
     int projectEmails;
+    int startEmails;
     std::string lastRecipient;
-    SpyNotifier() : projectEmails(0) {}
+    std::string lastEvent;
+    SpyNotifier() : projectEmails(0), startEmails(0) {}
     void notifyTaskComplete(Task*, std::string) override {}
     void notifyProjectComplete(Task*, std::string, std::string recipient) override {
         projectEmails++;
         lastRecipient = recipient;
     }
-    void notifyStateChange(Task*, const std::string&, const std::string&) override {}
+    void notifyStateChange(Task*, const std::string& event, const std::string& recipient) override {
+        startEmails++;
+        lastEvent = event;
+        lastRecipient = recipient;
+    }
 };
 
 TEST_CASE("Facade: tasks are created in order through the Director") {
@@ -272,8 +278,30 @@ TEST_CASE("Facade: finishing a workflow sends one email to the chosen address") 
     CHECK(!f.setNotificationEmail(""));
     buildSampleWorkflow(f);
     quiet([&] { f.runWorkflow(); f.runWorkflow(); });
+    CHECK(spy->startEmails == 1);
+    CHECK(spy->lastEvent == "Workflow started");
     CHECK(spy->projectEmails == 1);
     CHECK(spy->lastRecipient == "student@example.com");
+}
+
+TEST_CASE("Facade: the first facade action sends one start email") {
+    TividyFacade f;
+    SpyNotifier* spy = new SpyNotifier();
+    f.setNotifier(spy);
+    CHECK(f.setNotificationEmail("student@example.com"));
+    f.beginWorkflow("0.Intake", "2026-11-02");
+    f.addTask("1.Triage", "30", 1, 15);
+    f.addTask("4.Exam", "45", 4, 20);
+    f.finishWorkflow();
+    CHECK(spy->startEmails == 0);
+    quiet([&] { CHECK(!f.startTask("9.Missing")); });
+    CHECK(spy->startEmails == 0);
+    quiet([&] { f.completeTask("1.Triage"); });
+    CHECK(spy->startEmails == 1);
+    CHECK(spy->projectEmails == 0);
+    quiet([&] { f.cancelTask("4.Exam"); });
+    CHECK(spy->startEmails == 1);
+    CHECK(spy->projectEmails == 1);
 }
 
 TEST_CASE("Facade: finishing the last task through a facade action sends one email") {
