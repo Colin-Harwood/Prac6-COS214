@@ -1,6 +1,15 @@
 [[COS 214]]
 9/10/2026
 
+
+# Making the files
+## Unit tests
+Unit Tests are made using DocTest
+Making and running:
+ - Unit tests are created with the make unit_tests command
+ - This creates an xml file with the results of the test
+ - Then running ./unit_tests gets the output/results of the tests 
+
  An interactive generalized workflow system used to define projects for automatic or manual approval by user input. Tasks are user defined with deadlines, states and sub task dependencies with a rollback system supported by a consistent snapshot history and a workflow log report.
 ## Define how tasks are built?
 Builder builds the composite. There will be concreteBuilders for a leaf node and composite node.

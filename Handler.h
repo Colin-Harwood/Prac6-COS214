@@ -12,10 +12,11 @@ class Command;
 class Handler {
 private:
     Handler* next;
-    Command* command;//command
+    
 protected:
     int minLeaf;
     int maxLeaf;
+    Command* command;//command
     virtual void process(Task* t, int number) = 0;
 public:
     explicit Handler(Command* c = nullptr);

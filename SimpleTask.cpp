@@ -1,4 +1,5 @@
 #include "SimpleTask.h"
+#include "DepartmentTaskIterator.h"
 #include <iostream>
 
 SimpleTask::SimpleTask(const std::string& name, const std::string& deadline, int duration):Task(name, deadline),duration(duration){}
@@ -9,7 +10,16 @@ void SimpleTask::execute() {
 bool SimpleTask::isLeaf() const {
     return true;
 }
-//Prototype
-Task* SimpleTask::clone() const{return nullptr;}
-//Iterator
-TaskIterator* SimpleTask::createIterator(int){return nullptr;}
+
+//added by KAI
+SimpleTask::SimpleTask(const SimpleTask& other) : Task(other), duration(other.duration) {}
+
+//Prototype edited by KAI
+Task* SimpleTask::clone() const{
+    return new SimpleTask(*this);
+}
+
+//Iterator edited by Motheo
+TaskIterator* SimpleTask::createIterator(int level){
+    return new DepartmentTaskIterator(this,level);
+}

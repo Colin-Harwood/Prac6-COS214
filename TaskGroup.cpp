@@ -1,4 +1,5 @@
 #include "TaskGroup.h"
+#include "DepartmentTaskIterator.h"
 #include <algorithm>
 
 TaskGroup::TaskGroup(const std::string& name, const std::string& deadline):Task(name, deadline) {}
@@ -27,7 +28,7 @@ void TaskGroup::add(Task* t){
     }
 }
 
-// Detaches the child the CALLER NEEDS TO DELETE 
+// Detaches the child the CALLER NEEDS TO DELETE
 void TaskGroup::remove(Task* t){
     children.erase(std::remove(children.begin(),children.end(),t),children.end());
 }
@@ -37,11 +38,18 @@ bool TaskGroup::isLeaf() const{
 std::vector<Task*> TaskGroup::getChildren() const{
     return children;
 }
+TaskGroup::TaskGroup(const TaskGroup& other)
+    : Task(other) {
+    // Deep copy children
+    for (Task* child : other.children) {
+        this->children.push_back(child->clone());
+    }
+}
 //Prototype
 Task* TaskGroup::clone() const{
-    return nullptr;
+    return new TaskGroup(*this);
 }
-//Iterator
-TaskIterator* TaskGroup::createIterator(int){
-    return nullptr;
+//Iterator edited by Motheo
+TaskIterator* TaskGroup::createIterator(int level){
+    return new DepartmentTaskIterator(this, level);
 }

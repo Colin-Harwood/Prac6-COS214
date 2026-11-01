@@ -1,0 +1,61 @@
+#ifndef TIVIDYFACADE_H
+#define TIVIDYFACADE_H
+
+#include <string>
+#include <vector>
+
+class Director;
+class Task;
+class Handler;
+class Command;
+class LogQueue;
+class TaskSnapshotManager;
+class Target;
+class Observer;
+
+class TividyFacade {
+private:
+    Director* director;
+    Task* root;
+    Handler* chain;
+    LogQueue* logQueue;
+    TaskSnapshotManager* snapshotManager;
+    Target* notifier;
+    std::vector<Observer*> monitors;
+
+    std::vector<Handler*> handlers;
+    Command* command;
+    std::vector<Task*> undoTargets;
+
+    void buildChain();
+    void attachObservers(Task* t);
+    Task* findTask(const std::string& taskName);
+
+    Task* findIn(Task* node, const std::string& taskName);
+    void collectLevels(Task* node, std::vector<int>& levels);
+    void collectLeaves(Task* node, std::vector<Task*>& leaves);
+    void printNode(Task* node, int depth);
+    bool dispatch(Task* t);
+    bool transition(const std::string& taskName, void (Task::*move)());
+
+public:
+    TividyFacade();
+    ~TividyFacade();
+
+    bool loadWorkflow(const std::string& file);
+    void runWorkflow();
+    void printWorkflow();
+    std::string getTaskStatus(const std::string& taskName);
+    bool startTask(const std::string& taskName);
+    bool completeTask(const std::string& taskName);
+    bool rejectTask(const std::string& taskName);
+    bool cancelTask(const std::string& taskName);
+    bool reopenTask(const std::string& taskName);
+    bool undoLast();
+    void showLog();
+    void checkTimeouts();
+
+    void setRoot(Task* t);
+};
+
+#endif

@@ -8,6 +8,7 @@ class TaskState;
 class TaskIterator;
 class SimpleTaskBuilder;
 class TaskGroupBuilder;
+class Observer;
 /**
  * Task = Component (Composite)
  * The name starts with its category number
@@ -20,8 +21,11 @@ private:
     std::string name;
     std::string deadline;
     int deptLevel;
-    bool isComplete;     
-    TaskState* state;    
+    bool isComplete;
+    TaskState* state;
+
+    std::vector<Observer*> observers;   // Observer
+
     static int parseDeptLevel(const std::string& taskName);//add to UML
 public:
     Task(const std::string& name, const std::string& deadline);
@@ -33,8 +37,8 @@ public:
     //Composite
     virtual int totalTime() const = 0;
     virtual void execute() = 0;
-    virtual void add(Task* t);       
-    virtual void remove(Task* t);    
+    virtual void add(Task* t);
+    virtual void remove(Task* t);
     virtual bool isLeaf() const = 0;
     virtual std::vector<Task*> getChildren() const;
 
@@ -43,16 +47,27 @@ public:
 
     //Iterator
     virtual TaskIterator* createIterator(int level) = 0;
+    bool isFinished() const; // Added by Motheo
 
     //State
+    Task(const Task& other);
     void setCompleteStatus(bool b);
     void setState(TaskState* s);
     std::string getStateName() const;
-    void start();
-    void complete();
-    void reject();
-    void timeout();
-    void cancel();
+    virtual void start();
+    virtual void complete();
+    virtual void reject();
+    virtual void timeout();
+    virtual void cancel();
+    virtual void reopen();                      // State
+
+    //Observer
+    void addObserver(Observer* observer);
+    void removeObserver(Observer* observer);
+    void notify(std::string type);
+
+    ///ADDED BY KAI
+    virtual void restoreFrom(Task* snapshot);
 };
 
 #endif

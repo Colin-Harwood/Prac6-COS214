@@ -14,7 +14,15 @@ class TaskSnapshotManager{
     TaskSnapshotManager();
     ~TaskSnapshotManager();
     void addSnapshot(Task* task); //add to the history stack
+    void save(Task* task); // alias for addSnapshot
     Task* getSnapshot(); //returns a task and pops from the history stack
+
+    ///added by KAI
+
+
+    // Restores fields from the latest snapshot. Returns true if successful.
+    bool restoreLatest(Task* t);
+
 };
 
 #endif // TASKSNAPSHOTMANAGER_H

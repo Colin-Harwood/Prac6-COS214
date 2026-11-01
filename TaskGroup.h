@@ -5,7 +5,7 @@
 #include <vector>
 class TaskGroupBuilder;
 class TaskGroup : public Task {
-    friend class TaskGroupBuilder; 
+    friend class TaskGroupBuilder;
 private:
     std::vector<Task*> children;//vector of simpletasks
 public:
@@ -17,6 +17,7 @@ public:
     void remove(Task* t) override;
     bool isLeaf() const override;
     std::vector<Task*> getChildren() const override;//add to UML
+    TaskGroup(const TaskGroup& other);
     // Prototype
     Task* clone() const override;
     TaskIterator* createIterator(int level) override;
