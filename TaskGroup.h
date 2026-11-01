@@ -18,7 +18,17 @@ public:
     bool isLeaf() const override;
     std::vector<Task*> getChildren() const override;//add to UML
     // State comes from the children, not a stored state
+    /**
+     * @brief Works out the group's state from its children.
+     *
+     * @return Pending, InProgress, Completed or Cancelled.
+     */
     std::string getStateName() const override;
+    /**
+     * @brief Checks whether the group has children and all of them are finished.
+     *
+     * @return True if every child is finished. False for an empty group.
+     */
     bool isFinished() const override;
     TaskGroup(const TaskGroup& other);
     // Prototype

@@ -52,13 +52,53 @@ public:
     //State
     Task(const Task& other);
     virtual void setCompleteStatus(bool b);
+    /**
+     * @brief Replaces the current state and deletes the old one.
+     *
+     * @param s New state, which the task takes ownership of.
+     */
     virtual void setState(TaskState* s);
+    /**
+     * @brief Gets the name of the current state.
+     *
+     * @return The state name, such as "Pending".
+     */
     virtual std::string getStateName() const;
+    /**
+     * @brief Starts the task.
+     *
+     * @throws InvalidTransition if the current state does not allow it.
+     */
     virtual void start();
+    /**
+     * @brief Completes the task.
+     *
+     * @throws InvalidTransition if the current state does not allow it.
+     */
     virtual void complete();
+    /**
+     * @brief Rejects the task.
+     *
+     * @throws InvalidTransition if the current state does not allow it.
+     */
     virtual void reject();
+    /**
+     * @brief Marks the task as timed out.
+     *
+     * @throws InvalidTransition if the current state does not allow it.
+     */
     virtual void timeout();
+    /**
+     * @brief Cancels the task.
+     *
+     * @throws InvalidTransition if the current state does not allow it.
+     */
     virtual void cancel();
+    /**
+     * @brief Reopens the task.
+     *
+     * @throws InvalidTransition if the current state does not allow it.
+     */
     virtual void reopen();                      // State
 
     //Observer
