@@ -15,7 +15,9 @@ void TaskSnapshotManager::save(Task* task) {
 }
 
 void TaskSnapshotManager::addSnapshot(Task* task) {
-    history.push(task->clone());
+    if (task) {
+        history.push(task->clone());
+    }
 }
 
 Task* TaskSnapshotManager::getSnapshot(){

@@ -11,7 +11,7 @@ class LogQueue {
 public:
 
     LogQueue() = default;
-    ~LogQueue() = default;
+    ~LogQueue();
 
     /**
      * @brief Pushes a command to the queue.
