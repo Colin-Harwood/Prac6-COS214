@@ -6,54 +6,58 @@
 #include "../LogCommand.h"
 #include "../LogQueue.h"
 #include "../TaskSnapshotManager.h"
+#include "../SimpleTask.h"
+#include "../TaskState.h"
 
 #include <sstream>
 #include <fstream>
 #include <string>
 #include <stdexcept>
+#include <vector>
 
+namespace {
+    class MockTask : public Task {
+    public:
+        std::string name;
+        bool started = false;
+        bool completed = false;
+        int restoreCount = 0;
+        bool shouldThrowOnStart = false;
 
-class MockTask : public Task {
-public:
-    std::string name;
-    bool started = false;
-    bool completed = false;
-    int restoreCount = 0;
-    bool shouldThrowOnStart = false;
+        explicit MockTask(const std::string& n) : Task(n, ""), name(n) {}
 
-    explicit MockTask(const std::string& n) : Task(n, ""), name(n) {}
+        // Copy constructor for clone()
+        MockTask(const MockTask& other)
+            : Task(other), name(other.name), started(other.started),
+              completed(other.completed), restoreCount(other.restoreCount),
+              shouldThrowOnStart(other.shouldThrowOnStart) {}
 
-    // Copy constructor for clone()
-    MockTask(const MockTask& other)
-        : Task(other), name(other.name), started(other.started),
-          completed(other.completed), restoreCount(other.restoreCount),
-          shouldThrowOnStart(other.shouldThrowOnStart) {}
+        std::string getName() const override { return name; }
 
-    std::string getName() const { return name; }
+        void start() override {
+            if (shouldThrowOnStart) throw std::runtime_error("Start failed");
+            started = true;
+        }
 
-    void start() override {
-        if (shouldThrowOnStart) throw std::runtime_error("Start failed");
-        started = true;
-    }
+        void complete() override { completed = true; }
 
-    void complete() override { completed = true; }
+        Task* clone() const override {
+            return new MockTask(*this);
+        }
 
-    Task* clone() const override {
-        return new MockTask(*this);
-    }
+        void restoreFrom(Task* /*t*/) override {
+            restoreCount++;
+            started = false;
+            completed = false;
+        }
 
-    void restoreFrom(Task* /*t*/) override {
-        restoreCount++;
-        started = false;
-        completed = false;
-    }
-
-    // Dummy implementations for Task pure virtuals
-    bool isLeaf() const override { return true; }
-    int totalTime() const override { return 0; }
-    void execute() override {}
-    TaskIterator* createIterator(int) override { return nullptr; }
-};
+        // Dummy implementations for Task pure virtuals
+        bool isLeaf() const override { return true; }
+        int totalTime() const override { return 0; }
+        void execute() override {}
+        TaskIterator* createIterator(int) override { return nullptr; }
+    };
+}
 
 TEST_CASE("LogQueue basic operations") {
     LogQueue queue;
@@ -84,6 +88,7 @@ TEST_CASE("LogQueue flushTo writes and clears") {
     std::string output = oss.str();
     CHECK(output.find("EXECUTED: TestTask") != std::string::npos);
     CHECK(queue.empty());
+    delete cmd;
 }
 
 TEST_CASE("TaskSnapshotManager save and restore") {
@@ -236,5 +241,69 @@ TEST_CASE("LogCommand clone") {
 
     inFile.close();
     delete cloned;
+    std::remove(testFile.c_str());
+}
+
+TEST_CASE("Command subsystem: real SimpleTask state transitions, rollback, undo, and file logging") {
+    const std::string testFile = "test_command_real_states.log";
+    std::remove(testFile.c_str());
+
+    LogQueue queue;
+    TaskSnapshotManager snapMgr;
+    ExecuteCommand execCmd(&queue, &snapMgr);
+    LogCommand logCmd(&queue, &snapMgr, testFile);
+
+    SimpleTask task1("1.Triage", "2026-12-31", 10);
+    SimpleTask task2("2.LabWork", "2026-12-31", 20);
+
+    // 1. Initial states are Pending and not finished
+    CHECK(task1.getStateName() == "Pending");
+    CHECK_FALSE(task1.isFinished());
+    CHECK(task2.getStateName() == "Pending");
+    CHECK_FALSE(task2.isFinished());
+
+    // 2. ExecuteCommand transitions task1 from Pending -> InProgress -> Completed
+    execCmd.execute(&task1);
+    CHECK(task1.getStateName() == "Completed");
+    CHECK(task1.isFinished());
+
+    // 3. Undo reverts task1 state back to Pending and not finished
+    execCmd.undo(&task1);
+    CHECK(task1.getStateName() == "Pending");
+    CHECK_FALSE(task1.isFinished());
+
+    // 4. Re-executing task1 succeeds and transitions it back to Completed
+    execCmd.execute(&task1);
+    CHECK(task1.getStateName() == "Completed");
+    CHECK(task1.isFinished());
+
+    // 5. Executing a task already in InProgress fails, rolls back to InProgress, and logs FAILED
+    task2.start();
+    CHECK(task2.getStateName() == "InProgress");
+    CHECK_THROWS_AS(execCmd.execute(&task2), InvalidTransition);
+    CHECK(task2.getStateName() == "InProgress");
+    CHECK_FALSE(task2.isFinished());
+
+    // 6. Flushing via LogCommand writes the full history to the file and empties the queue
+    logCmd.execute(&task1);
+    CHECK(queue.empty());
+
+    std::ifstream inFile(testFile);
+    REQUIRE(inFile.is_open());
+
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(inFile, line)) {
+        lines.push_back(line);
+    }
+    inFile.close();
+
+    REQUIRE(lines.size() == 5);
+    CHECK(lines[0] == "EXECUTED: 1.Triage");
+    CHECK(lines[1] == "UNDONE: 1.Triage");
+    CHECK(lines[2] == "EXECUTED: 1.Triage");
+    CHECK(lines[3] == "FAILED: 2.LabWork");
+    CHECK(lines[4] == "WORKFLOW CLOSED: 1.Triage");
+
     std::remove(testFile.c_str());
 }
