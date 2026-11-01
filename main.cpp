@@ -1,4 +1,4 @@
-// TIVIDY GUI - Phase 1 skeleton, all in one file. The side-by-side code report walks through it.
+// TIVIDY GUI - all in one file. Phase 1 skeleton + backend connection (the GUI passes its data down to TividyFacade).
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -6,8 +6,13 @@
 
 #include <cstdio>
 #include <cstring>
+#include <iostream>
+#include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
+
+#include "TividyFacade.h"   // the ONE backend class the GUI talks to (Facade pattern)
 
 // PART 1: THE GUI'S OWN DATA
 
@@ -23,7 +28,9 @@ struct HandlerData {
     char handlerNames[3][64];
     char levelNames[9][64];
 
-    char recipientEmail[128];
+    char recipientEmail[128];   // what the user is typing
+    std::string savedEmail;     // what they submitted (GUI-only for now; email is not wired to the backend yet)
+    std::string emailStatus;    // feedback line shown under the button
 
     HandlerData() {
         copyText(handlerNames[0], 64, "Workforce");
@@ -85,6 +92,120 @@ struct OutputData {
     OutputData() : scrollToBottom(false) {}
 };
 
+// PART 1b: TALKING TO THE BACKEND (everything goes through TividyFacade)
+
+// The backend finds a task's department level from the START of its name, in the form <level>.<name>
+// (for example "4.Review"). The GUI keeps the level and the plain name apart, so we join them here.
+static std::string backendName(const TaskEntry& entry) {
+    std::ostringstream out;
+    out << entry.deptLevel << '.' << entry.name;
+    return out.str();
+}
+
+// The facade prints with std::cout. This object points cout at our own buffer for as long as it lives,
+// then puts the old buffer back in its destructor (even if an exception is thrown).
+class CoutCapture {
+public:
+    explicit CoutCapture(std::ostringstream& target) : old(std::cout.rdbuf(target.rdbuf())) {}
+    ~CoutCapture() { std::cout.rdbuf(old); }
+private:
+    std::streambuf* old;
+    CoutCapture(const CoutCapture&);              // not copyable (C++11 style without "= delete" noise)
+    CoutCapture& operator=(const CoutCapture&);
+};
+
+// Checks the user's entries before we send anything. Returns "" when fine, otherwise a message for the console.
+static std::string validateEntries(const std::vector<TaskEntry>& entries) {
+    for (size_t i = 0; i < entries.size(); i++) {
+        if (entries[i].name[0] == '\0') {
+            return "A task or group has no name. Give every one a name first.";
+        }
+        if (entries[i].isGroup) {
+            if (entries[i].children.empty()) {
+                return std::string("Group \"") + entries[i].name + "\" is empty. Add a task to it or remove it.";
+            }
+            std::string inner = validateEntries(entries[i].children);
+            if (!inner.empty()) {
+                return inner;
+            }
+        }
+    }
+    return "";
+}
+
+// Sends the entries to the facade in order. beginGroup/endGroup bracket a group's children,
+// so the recursion mirrors the tree the user built. Returns false as soon as the facade refuses something.
+static bool submitEntries(TividyFacade& facade, const std::vector<TaskEntry>& entries) {
+    for (size_t i = 0; i < entries.size(); i++) {
+        const TaskEntry& e = entries[i];
+        if (e.isGroup) {
+            if (!facade.beginGroup(backendName(e), e.deadline)) return false;
+            if (!submitEntries(facade, e.children))             return false;
+            if (!facade.endGroup())                             return false;
+        } else {
+            if (!facade.addTask(backendName(e), e.deadline, e.deptLevel, e.duration)) return false;
+        }
+    }
+    return true;
+}
+
+// Adds text to the console, one console line per text line.
+static void addConsoleText(OutputData& out, const std::string& text) {
+    std::istringstream in(text);
+    std::string line;
+    while (std::getline(in, line)) {
+        if (!line.empty() && line[line.size() - 1] == '\r') line.erase(line.size() - 1);
+        out.lines.push_back(line);
+    }
+    out.scrollToBottom = true;
+}
+
+// Builds the workflow from the Task tab and runs it. Called when "Run Workflow" is clicked.
+// Note: this blocks the window until the workflow finishes (fine for small workflows).
+static void runWorkflowFromGui(const TaskData& tasks, OutputData& out) {
+    out.lines.push_back("=== Run ===");
+
+    if (tasks.entries.empty()) {
+        addConsoleText(out, "Nothing to run. Add at least one task on the Task Builder tab.");
+        return;
+    }
+    std::string problem = validateEntries(tasks.entries);
+    if (!problem.empty()) {
+        addConsoleText(out, problem);
+        return;
+    }
+
+    // The facade appends to workflow.log. Start from an empty file so the log shows only this run.
+    std::remove("workflow.log");
+
+    std::ostringstream captured;
+    {
+        CoutCapture capture(captured);   // everything the facade prints now lands in "captured"
+        try {
+            // A fresh facade per run: no leftover tree, undo list or snapshots from an earlier run.
+            std::unique_ptr<TividyFacade> facade(new TividyFacade());
+
+            bool built = facade->beginWorkflow(tasks.workflowName, tasks.workflowDeadline)
+                      && submitEntries(*facade, tasks.entries)
+                      && facade->finishWorkflow();   // the Director/Builder create the real tasks here
+
+            if (built) {
+                facade->runWorkflow();
+                std::cout << "--- Final state ---" << std::endl;
+                facade->printWorkflow();
+                std::cout << "--- Log ---" << std::endl;
+                facade->showLog();   // flushes the log queue to workflow.log, then prints the file
+            } else {
+                std::cout << "The workflow could not be built." << std::endl;
+            }
+        } catch (const std::exception& e) {
+            std::cout << "Error: " << e.what() << std::endl;
+        }
+    }   // capture goes out of scope here: cout is back to normal
+
+    addConsoleText(out, captured.str());
+}
+
 // PART 2: ONE DRAW FUNCTION PER TAB
 
 // ---- Handler Definition tab
@@ -126,10 +247,19 @@ static void drawHandlerTab(HandlerData& data) {
     ImGui::Separator();
 
     ImGui::InputText("Recipient email", data.recipientEmail, sizeof(data.recipientEmail));
-    // Button() is true only on the frame it is clicked. Placeholder for now; later this calls the facade.
-    if(ImGui::Button("submit email")) {
-        printf("[Phase 1] Email service: would send to %s\n", data.recipientEmail);
-
+    // Button() is true only on the frame it is clicked.
+    // Email is skipped for now (the facade has no notifier yet), so we only remember the address here.
+    if (ImGui::Button("submit email")) {
+        std::string email = data.recipientEmail;
+        if (email.find('@') == std::string::npos) {
+            data.emailStatus = "That does not look like an email address (missing @).";
+        } else {
+            data.savedEmail = email;
+            data.emailStatus = "Saved (GUI only): " + email;
+        }
+    }
+    if (!data.emailStatus.empty()) {
+        ImGui::TextDisabled("%s", data.emailStatus.c_str());
     }
 }
 
@@ -150,7 +280,8 @@ static bool drawEntry(TaskEntry& entry, const HandlerData& handlers, int& nextUi
     // TreeNodeEx returns true while open; TreePop() must then be called.
     if (ImGui::TreeNodeEx(title.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
 
-        ImGui::InputText("Name",     entry.name,     sizeof(entry.name));
+        // CharsNoBlank rejects spaces (typed or pasted): the backend cannot handle spaces in task names yet.
+        ImGui::InputText("Name",     entry.name,     sizeof(entry.name), ImGuiInputTextFlags_CharsNoBlank);
         ImGui::InputText("Deadline", entry.deadline, sizeof(entry.deadline));
 
         std::string preview = levelLabel(handlers, entry.deptLevel);
@@ -167,6 +298,11 @@ static bool drawEntry(TaskEntry& entry, const HandlerData& handlers, int& nextUi
                 }
             }
             ImGui::EndCombo();
+        }
+
+        // Shows exactly what the backend will receive as the name: <level>.<name>
+        if (entry.name[0] != '\0') {
+            ImGui::TextDisabled("Backend name: %s", backendName(entry).c_str());
         }
 
         // Tasks have a duration; groups hold children instead.
@@ -239,7 +375,7 @@ static void drawTaskTab(TaskData& data, const HandlerData& handlers) {
 
 // ---- Run and Output tab
 // Draws the Run and Output tab: a scrolling console and the Run button.
-static void drawOutputTab(OutputData& data) {
+static void drawOutputTab(OutputData& data, const TaskData& tasks) {
     // Reserve one row at the bottom for the button; the console fills the rest.
     float footerHeight = ImGui::GetFrameHeightWithSpacing() + ImGui::GetStyle().ItemSpacing.y;
 
@@ -254,10 +390,12 @@ static void drawOutputTab(OutputData& data) {
     }
     ImGui::EndChild();
 
-    // Phase 1 placeholder: only writes a line to the console.
     if (ImGui::Button("Run Workflow")) {
-        data.lines.push_back("[Phase 1] Run clicked - not connected to the backend yet.");
-        data.scrollToBottom = true;
+        runWorkflowFromGui(tasks, data);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Clear console")) {
+        data.lines.clear();
     }
 }
 
@@ -288,7 +426,7 @@ static void drawTividyGui() {
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Run and Output")) {
-            drawOutputTab(outputData);
+            drawOutputTab(outputData, taskData);
             ImGui::EndTabItem();
         }
 
