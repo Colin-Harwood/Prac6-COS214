@@ -3,8 +3,8 @@
 #include "Command.h"
 #include "LogCommand.h"
 #include "TaskIterator.h"
-#include "TaskState.h"      // InvalidTransition
 #include <iostream>
+#include <exception>
 
 
 Handler::Handler(Command* c): next(nullptr), minLeaf(0), maxLeaf(0), command(c), logcommand(nullptr) {}
@@ -25,32 +25,11 @@ void Handler::handle(Task* t, int number){
 void Handler::setLogCommand(LogCommand* l){logcommand = l;}
 
 bool Handler::runTask(Task* task, const char* label){
-    // Pending/TimedOut -> InProgress
     try {
-        task->start();
-    } catch (const InvalidTransition&) {
-        // can't start: only carry on if it is already InProgress
-        if (task->getStateName() != "InProgress") {
-            std::cout << label << ": skipped " << task->getName()
-                      << " (" << task->getStateName() << ")" << std::endl;
-            return false;
-        }
-    }
-
-    command->execute(task);
-
-    // InProgress -> Completed
-    try {
-        task->complete();
-    } catch (const InvalidTransition&) {
-        // monitor timed it out mid-work: TimedOut -> InProgress -> Completed
-        try {
-            task->start();
-            task->complete();
-        } catch (const InvalidTransition& e) {
-            std::cout << label << ": " << e.what() << std::endl;
-            return false;
-        }
+        command->execute(task);
+    } catch (const std::exception& e) {
+        std::cout << label << ": " << e.what() << std::endl;
+        return false;
     }
     return true;
 }

@@ -17,11 +17,19 @@ struct CmdFixture {
     CmdFixture() : cmd(&queue, &snaps) {}
 };
 
+// Restores cout even if handle() throws
+struct CoutGuard {
+    std::streambuf* old;
+    explicit CoutGuard(std::streambuf* b) : old(std::cout.rdbuf(b)) {}
+    ~CoutGuard() { std::cout.rdbuf(old); }
+};
+
 static std::string run(Handler& h, Task* t, int number) {
     std::ostringstream captured;
-    std::streambuf* old = std::cout.rdbuf(captured.rdbuf());
-    h.handle(t, number);
-    std::cout.rdbuf(old);
+    {
+        CoutGuard guard(captured.rdbuf());
+        h.handle(t, number);
+    }
     return captured.str();
 }
 
