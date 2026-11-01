@@ -1,3 +1,7 @@
+/**
+ * @file PendingState.cpp
+ * @brief Implements the moves PendingState allows.
+ */
 #include "PendingState.h"
 #include "CancelledState.h"
 #include "InProgressState.h"

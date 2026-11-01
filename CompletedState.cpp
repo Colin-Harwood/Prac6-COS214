@@ -1,3 +1,7 @@
+/**
+ * @file CompletedState.cpp
+ * @brief Implements the moves CompletedState allows.
+ */
 #include "CompletedState.h"
 #include "PendingState.h"
 

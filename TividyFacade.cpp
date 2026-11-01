@@ -1,3 +1,7 @@
+/**
+ * @file TividyFacade.cpp
+ * @brief Connects the workflow engine behind the facade's calls.
+ */
 #include "TividyFacade.h"
 #include "Task.h"
 #include "TaskState.h"
@@ -20,6 +24,11 @@
 #include <sstream>
 
 namespace {
+/**
+ * @brief Lets the facade add log entries for its own task actions.
+ *
+ * record() is only available to Command classes, and this helper only logs.
+ */
 class ActionLog : public Command {
 public:
     ActionLog(LogQueue* q, TaskSnapshotManager* s) : Command(q, s) {}

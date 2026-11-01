@@ -1,3 +1,7 @@
+/**
+ * @file InProgressState.cpp
+ * @brief Implements the moves InProgressState allows.
+ */
 #include "InProgressState.h"
 #include "CancelledState.h"
 #include "CompletedState.h"

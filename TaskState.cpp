@@ -1,3 +1,7 @@
+/**
+ * @file TaskState.cpp
+ * @brief Default TaskState behaviour: every action is refused.
+ */
 #include "TaskState.h"
 
 InvalidTransition::InvalidTransition(const std::string& stateName, const std::string& action)

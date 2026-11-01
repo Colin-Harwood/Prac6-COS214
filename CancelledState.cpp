@@ -1,3 +1,7 @@
+/**
+ * @file CancelledState.cpp
+ * @brief Implements the moves CancelledState allows.
+ */
 #include "CancelledState.h"
 
 std::string CancelledState::getName() const { return "Cancelled"; }
