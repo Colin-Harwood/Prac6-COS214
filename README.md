@@ -1,16 +1,38 @@
-[[COS 214]]
-9/10/2026
-
-
-# Making the files
+# TIVIDY
 ## Unit tests
 Unit Tests are made using DocTest
-Making and running:
- - Unit tests are created with the make unit_tests command
+Making and running locally:
+ - Unit tests are created with the `make unit_tests` command
  - This creates an xml file with the results of the test
- - Then running ./unit_tests gets the output/results of the tests 
+ - Then running `./unit_tests` gets the output/results of the tests 
 
- An interactive generalized workflow system used to define projects for automatic or manual approval by user input. Tasks are user defined with deadlines, states and sub task dependencies with a rollback system supported by a consistent snapshot history and a workflow log report.
+## GUI (Dear ImGui + GLFW)
+The GUI is built using Dear ImGui, GLFW and OpenGL:
+ - Install dependencies once: `make install-gui-deps`
+ - Build the GUI executable: `make gui`
+ - Run the GUI: `./tividy_gui` (or `make run-gui`)
+
+## Running with Docker (WSL2 / WSLg)
+The project is containerized using a multi-stage Ubuntu 22.04 Docker image compiled with C++11.
+Our system runs on WSL2 with WSLg for native GUI forwarding.
+
+### 1. Build the Docker image
+docker build -t tividy .
+
+
+### 2. Run the GUI in Docker (WSLg)
+- WSLg forwards the display straight into Windows through the `/mnt/wslg` and `/tmp/.X11-unix` sockets.
+- Mount your `.env` file with `-v "$(pwd)/.env:/app/.env:ro"` so the application can read your SMTP credentials to send notification emails through port 587.
+
+docker run -it --rm \
+  -e DISPLAY="$DISPLAY" \
+  -e WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v /mnt/wslg:/mnt/wslg \
+  -v "$(pwd)/.env:/app/.env:ro" \
+  tividy
+
+An interactive generalized workflow system used to define projects for automatic or manual approval by user input. Tasks are user defined with deadlines, states and sub task dependencies with a rollback system supported by a consistent snapshot history and a workflow log report.
 ## Define how tasks are built?
 Builder builds the composite. There will be concreteBuilders for a leaf node and composite node.
 The `construct()` function will pass in a text file in which the end user defines the structure of the tree and will call the correct concreteBuilder functions.
@@ -39,36 +61,50 @@ The sender does not know which concrete handler ends up handeling the task.
 - The iterator pattern allows the CoR Handler classes to traverse the Task composite, without seeing the tree structure. 
 - When a department Handler processes a workflow, it calls the createIterator() on the root to instantiate an external DepartmentTaskIterator 
 - Then we step through tasks matching them by their Department while skipping nodes whose status is Complete, Cancelled, Timed out, or failed.
-- At each valid node returned by currentItem(), the system checks checkAutomatic() to see if the task can be completed automatically via its Command object or needs to be approved manually, then we transition from Pending to In Progress and then to Complete.
+- At each valid node returned by currentItem(), the handler executes the task via its Command object, transitioning it from Pending to In Progress and then to Complete.
 - Once isDone() indicates that all eligible tasks for that department have been processed, we signal the Handler to pass the project to the next Handler in the chain, then we check if every node in the project is either Complete or Cancelled to decide whether the Workflow is finished or if the CoR must repeat
 
-
-This textfile is going to require a parser for tree construction.
-## What does a tasks look like:  
-- an id (produced by builder)
-- name (comes from file)
-- priority can be called departmentLevel (comes from file)
-- timer (global of 30seconds defined by the builder on creation)
-- Mediator_pointer for checking if a task has timed out
-- status (all start from pending so builder defines it)
-- next_task_pointer (Defined by builder when reading the construction file)
-- command (builder creates the pointer to a command)
-- log (string builds the state of the task. creates a memento snapshot)
-- department level (executive/common/managerial)
+## What does a task look like:
+In our C++ implementation, tasks form a **Composite pattern** hierarchy rooted at `Task`:
+- **Core fields in `Task` (Component base class):**
+  - `name`: string representing the task title. It starts with the category number (e.g. `"1.Category"`).
+  - `deadline`: string indicating the deadline or time allocation (e.g. `"10 min"`).
+  - `deptLevel`: parsed integer from the name prefix (`parseDeptLevel()`), defining which department/category level (1–9) handles it.
+  - `state`: pointer to the current `TaskState` (starts as `PendingState`).
+  - `isComplete`: boolean completion flag.
+  - `observers`: vector of `Observer*` (e.g. `TimeoutMonitor`) notified on `"update"` and `"finished"` events.
+  - `restoreFrom(snapshot)`: restores task attributes and deep-copies the state from a Prototype clone for rollback.
+- **`SimpleTask` (Leaf):**
+  - An individual unit of work that contains a `duration` (in minutes).
+  - `isLeaf()` returns true and it is directly executed by commands.
+- **`TaskGroup` (Composite):**
+  - A container holding a `std::vector<Task*>` of children (can nest other `TaskGroup` or `SimpleTask` nodes).
+  - `totalTime()` calculates the sum of all nested children's durations.
+  - `getStateName()` and `isFinished()` dynamically compute the group state based on the states of its children (Pending, InProgress, Completed, or Cancelled).
 
 ## How do we move from task to another task (system progress):
-- System is based on Department/priority based
-- Each task node (within the composite) has its own flag that states whether the task itself needs user input or can be automatically done by the command object ( when the iterator loops over the nodes it will check whether or not it can be done automatically by using teh nodes API e.g `checkAutomatic() : bool `
-- )
-- The tasks get approved/completed depending on what department you are in, so the iterators can go over for example executive level tasks aka "high priority" tasks.
-- You can set the names of the departments/groups
-- The iterator will go through the tasks and once complete it returns a flag, which signals the COR (Chain of responsibility)  to move the project onto the next handler.
-	- The status(aka state) changes as we work on the task
-		- everyone starts on pending, once loaded into the handler set to in progress and if it completes within the allocated time it is set to complete. 
-		- **BEFORE DECLARING A PROJECT DONE EVERY NODE MUST EITHER BE CANCELLED OR COMPLETE IF NOT REPEAT THE THE COR HANDLER LOOP.**
-		- If a task times out it (which the observer detect) the status is set to timed out and then set to failed.
-		- **the iterator skips failed/timed out and completed**:
-			- if a node times out it is attempted again
+System progression is driven by the interaction between the **Chain of Responsibility**, the **DepartmentTaskIterator**, and the **State pattern**:
+- **Department/Category Routing via Chain of Responsibility:**
+  - `ConcreteHandlerA` handles categories 1–3 (Workforce).
+  - `ConcreteHandlerB` handles categories 4–6 (Middle Management).
+  - `ConcreteHandlerC` handles categories 7–9 (Top Management / Executive).
+  - When a task category number is outside a handler's range, `canHandle()` returns false and the request is passed down the chain.
+- **Traversing with `DepartmentTaskIterator`:**
+  - The handler requests an iterator from the root: `t->createIterator(number)`.
+  - The iterator flattens the task tree and filters nodes with `isEligible()`, selecting only leaf tasks that match the target category level and are not finished: `t->isLeaf() && (t->getDepartmentLevel() == targetDepartment) && (!t->isFinished())`.
+  - It automatically steps through eligible tasks while skipping already finished (`Completed` or `Cancelled`) nodes.
+- **Task Lifecycle and Execution:**
+  - Each task begins in `PendingState`.
+  - When picked up by a handler, a `TimeoutMonitor` observer is attached to track execution time.
+  - The task transitions to `InProgressState` via `start()`.
+  - The handler executes the task using `ExecuteCommand` (`command->execute(task)`).
+  - On successful execution, the task transitions to `CompletedState` via `complete()`.
+  - If a timeout occurs, the monitor triggers `timeout()` -> `TimedOutState`, or a task may transition to `CancelledState` / `RejectedState`.
+  - State changes trigger `notify("update")` or `notify("finished")` to update registered observers.
+- **Project Completion & Logging:**
+  - The workflow manager continues processing handlers until all nodes in the composite tree are finished (`isFinished()` returns true for the entire root).
+  - Each completed task state is saved in the `TaskSnapshotManager` memento/prototype queue.
+  - Once all tasks for an iterator are finished, `LogCommand` flushes audit logs and `VMimeEmailAdapter` dispatches a completion email via SMTP.
 
 # Audit Logging:
 - create snapshots once a task is complete and adds it to a queue. the audit log command is called at the end once the project is defined as completed.
@@ -153,7 +189,16 @@ Each node has a certain list of responsibilities/jobs (just strings) and each ta
 Shreya: Builder
 Motheo: Iterator + Adapter
 Maeryn: State + Facade
-Kai: Command + Memento
+Kai: Command
 Rynhardt: Composite + Chain of Responsibility 
-Bheki: The GUI
+Bheki: The GUI and Prototype
 Colin: Mediator
+
+# Third-Party Libraries and Credits:
+- **Dear ImGui** ([GitHub](https://github.com/ocornut/imgui)):
+  - Created by Omar Cornut. Immediate mode GUI library for C++ paired with GLFW and OpenGL3 to build the interactive desktop application (`tividy_gui`).
+- **VMime** ([GitHub](https://github.com/kisli/vmime)):
+  - An open-source C++ class library for MIME and internet messaging protocols. Integrated through the Adapter pattern (`VMimeMailer` and `VMimeEmailAdapter`) for SMTP connection, TLS support, and dispatching workflow completion emails over port 587.
+- **doctest** ([GitHub](https://github.com/doctest/doctest)):
+  - Lightweight, header-only C++11 unit testing framework used for our automated test suite (`unit_tests`).
+
