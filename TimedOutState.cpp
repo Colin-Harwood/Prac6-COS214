@@ -1,3 +1,7 @@
+/**
+ * @file TimedOutState.cpp
+ * @brief Implements the moves TimedOutState allows.
+ */
 #include "TimedOutState.h"
 #include "CancelledState.h"
 #include "InProgressState.h"

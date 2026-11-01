@@ -1,3 +1,7 @@
+/**
+ * @file RejectedState.cpp
+ * @brief Implements the moves RejectedState allows.
+ */
 #include "RejectedState.h"
 #include "PendingState.h"
 
