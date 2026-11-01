@@ -157,3 +157,16 @@ Kai: Command + Memento
 Rynhardt: Composite + Chain of Responsibility 
 Bheki: The GUI
 Colin: Mediator
+
+## Docker build Commands
+build:
+docker build -t tividy .
+
+run:
+docker run -it --rm \
+  -e DISPLAY="$DISPLAY" \
+  -e WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v /mnt/wslg:/mnt/wslg \
+  -v "$(pwd)/.env:/app/.env:ro" \
+  tividy
