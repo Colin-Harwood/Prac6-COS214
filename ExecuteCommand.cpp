@@ -7,15 +7,21 @@
 ExecuteCommand::ExecuteCommand(LogQueue* q, TaskSnapshotManager* s):Command(q, s) {}
 
 void ExecuteCommand::execute(Task* t) {
+    if (!t) return;
+
     // Prototype B: Save snapshot before any change
-    snapshotManager->addSnapshot(t);
+    if (snapshotManager) {
+        snapshotManager->addSnapshot(t);
+    }
 
     try {
         t->start();
         t->complete();
     } catch (const std::exception& e) {
         // Undo a half-done transition
-        snapshotManager->restoreLatest(t);
+        if (snapshotManager) {
+            snapshotManager->restoreLatest(t);
+        }
         record(t, "FAILED");
         throw; // Re-throw to let the handler/engine know it failed
     }
@@ -25,7 +31,7 @@ void ExecuteCommand::execute(Task* t) {
 
 
 void ExecuteCommand::undo(Task* t) {
-    if (snapshotManager->restoreLatest(t)) {
+    if (snapshotManager && snapshotManager->restoreLatest(t)) {
         record(t, "UNDONE");
     }
 }
@@ -33,7 +39,7 @@ void ExecuteCommand::undo(Task* t) {
 
 Command* ExecuteCommand::clone() const {
     ExecuteCommand* copy = new ExecuteCommand(logQueue, snapshotManager);
-copy->taskName = this->taskName;
+    copy->taskName = this->taskName;
     copy->action = this->action;
     return copy;
 }

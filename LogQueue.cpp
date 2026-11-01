@@ -2,6 +2,13 @@
 #include "Command.h"
 
 
+LogQueue::~LogQueue() {
+    while (!q.empty()) {
+        delete q.front();
+        q.pop();
+    }
+}
+
 void LogQueue::push(Command* c) {
     q.push(c);
 }
