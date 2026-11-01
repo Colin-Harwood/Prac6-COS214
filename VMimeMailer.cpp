@@ -1,4 +1,3 @@
-
 #include "VMimeMailer.h"
 #include <iostream>
 #include <sstream>
