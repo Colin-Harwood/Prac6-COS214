@@ -7,23 +7,17 @@
 #include "../TaskGroupBuilder.h"
 #include "../TaskInput.h"
 
-class TaskState {};
-
 TEST_CASE("Director builds a nested task group") {
-    TaskState state;
-
     TaskInput root;
     root.name = "0.Project";
     root.deadline = "2026-12-31";
     root.deptLevel = 8;
-    root.state = &state;
     root.isGroup = true;
 
     TaskInput leaf;
     leaf.name = "2.Leaf";
     leaf.deadline = "2026-12-01";
     leaf.deptLevel = 6;
-    leaf.state = &state;
     leaf.duration = 15;
 
     TaskInput nestedGroup;
@@ -58,7 +52,6 @@ TEST_CASE("Director builds a nested task group") {
     REQUIRE(children[1]->getChildren().size() == 1);
     CHECK(children[1]->getChildren()[0]->totalTime() == 25);
 
-    // The placeholder lets the Director pass a non-null state pointer, but Task exposes no state getter.
     delete result;
 }
 

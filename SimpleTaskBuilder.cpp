@@ -36,7 +36,10 @@ void SimpleTaskBuilder::setComplete(bool complete) {
 
 void SimpleTaskBuilder::setState(TaskState* state) {
     //  setting state on composite task
-    task->state = state;
+    if (state != nullptr) {
+        delete task->state;
+        task->state = state;
+    }
 }
 
 void SimpleTaskBuilder::setChildren(std::vector<Task*> children) {

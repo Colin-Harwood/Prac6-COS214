@@ -33,7 +33,10 @@ void TaskGroupBuilder::setComplete(bool complete) {
 
 void TaskGroupBuilder::setState(TaskState* state) {
     //  setting state on composite task
-    task->state = state;
+    if (state != nullptr) {
+        delete task->state;
+        task->state = state;
+    }
 }
 
 void TaskGroupBuilder::setChildren(std::vector<Task*> children) {
