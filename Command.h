@@ -1,3 +1,8 @@
+/**
+ * @file Command.h
+ * @brief Abstract Command base class for workflow operations.
+ */
+
 #ifndef COMMAND_H
 #define COMMAND_H
 
@@ -8,6 +13,9 @@ class Task;
 class LogQueue;
 class TaskSnapshotManager;
 
+/**
+ * @brief Abstract Command base class.
+ */
 class Command {
 public:
     /**

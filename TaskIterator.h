@@ -1,3 +1,8 @@
+/**
+ * @file TaskIterator.h
+ * @brief Abstract interface for traversing composite Task hierarchies.
+ */
+
 #ifndef TASKITERATOR_H
 #define TASKITERATOR_H
 

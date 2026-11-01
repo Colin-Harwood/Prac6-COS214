@@ -1,3 +1,8 @@
+/**
+ * @file DepartmentTaskIterator.h
+ * @brief Iterator for traversing tasks filtered by department level.
+ */
+
 #ifndef DEPARTMENTTASKITERATOR_H
 #define DEPARTMENTTASKITERATOR_H
 

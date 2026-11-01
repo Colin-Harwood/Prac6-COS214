@@ -1,3 +1,8 @@
+/**
+ * @file Task.h
+ * @brief Base Component class for the composite Task structure.
+ */
+
 #ifndef TASK_H
 #define TASK_H
 
@@ -9,10 +14,10 @@ class TaskIterator;
 class SimpleTaskBuilder;
 class TaskGroupBuilder;
 class Observer;
+
 /**
- * Task = Component (Composite)
- * The name starts with its category number
- * That number is stored in deptLevel and is what the handlers look at
+ * @brief Component interface in the Composite pattern for tasks.
+ * The name starts with its category number, stored in deptLevel.
  */
 class Task {
     friend class SimpleTaskBuilder;
@@ -43,6 +48,9 @@ public:
     virtual std::vector<Task*> getChildren() const;
 
     //Prototype
+    /**
+     * @brief Clones the task (Prototype pattern).
+     */
     virtual Task* clone() const = 0;
 
     //Iterator
@@ -106,7 +114,9 @@ public:
     virtual void removeObserver(Observer* observer);
     virtual void notify(std::string type);
 
-    ///ADDED BY KAI
+    /**
+     * @brief Restores the task state from a snapshot.
+     */
     virtual void restoreFrom(Task* snapshot);
 };
 

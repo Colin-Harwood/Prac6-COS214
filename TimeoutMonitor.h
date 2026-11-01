@@ -1,3 +1,11 @@
+/**
+ * @file TimeoutMonitor.h
+ * @author Colin Harwood
+ * @brief Uses threads to check if the state of the task has changed in the last 30 seconds, and if it hasn't set the task to TimedOut
+ * 
+ * 
+ */
+
 #ifndef TIMEOUT_MONITOR
 #define TIMEOUT_MONITOR
 

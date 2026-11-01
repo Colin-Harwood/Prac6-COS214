@@ -1,3 +1,8 @@
+/**
+ * @file Director.h
+ * @brief Director class for constructing Task hierarchies.
+ */
+
 #ifndef DIRECTOR_H
 #define DIRECTOR_H
 
@@ -17,7 +22,7 @@ private:
     TaskInput* input;
 
 public:
-    /// Creates a director without an input or builder.
+    /// @brief Creates a director without an input or builder.
     Director();
     /**
      * @brief Creates a director for the given input and builder.
@@ -25,7 +30,7 @@ public:
      * @param builder Builder compatible with the root input type.
      */
     Director(TaskInput* input, Builder* builder);
-    /// Destroys the director.
+    /// @brief Destroys the director.
     ~Director();
 
     /**

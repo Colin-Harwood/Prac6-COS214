@@ -1,3 +1,8 @@
+/**
+ * @file LogQueue.h
+ * @brief Queue for storing and flushing executed commands.
+ */
+
 #ifndef LOG_QUEUE_H
 #define LOG_QUEUE_H
 
@@ -7,6 +12,9 @@
 
 class Command; // Forward declaration
 
+/**
+ * @brief Queue for managing executed command history.
+ */
 class LogQueue {
 public:
 

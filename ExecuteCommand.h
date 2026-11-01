@@ -1,8 +1,16 @@
+/**
+ * @file ExecuteCommand.h
+ * @brief Command for executing tasks and capturing snapshots.
+ */
+
 #ifndef EXECUTE_COMMAND_H
 #define EXECUTE_COMMAND_H
 
 #include "Command.h"
 
+/**
+ * @brief Command that executes a task.
+ */
 class ExecuteCommand : public Command {
 public:
     /**

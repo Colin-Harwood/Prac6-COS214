@@ -1,3 +1,8 @@
+/**
+ * @file Handler.h
+ * @brief Base Handler for the Chain of Responsibility pattern.
+ */
+
 #ifndef HANDLER_H
 #define HANDLER_H
 
@@ -6,9 +11,8 @@ class Command;
 class LogCommand;
 
 /**
- * Handler (Chain of Responsibility)
- * Handles a task if its category is inside [minLeaf, maxLeaf]
- * otherwise passes it to the next handler
+ * @brief Handler in the Chain of Responsibility pattern.
+ * Handles a task if its category is inside [minLeaf, maxLeaf], otherwise passes it to the next handler.
  */
 class Handler {
 private:
@@ -21,7 +25,10 @@ protected:
     LogCommand* logcommand;
 
     virtual void process(Task* t, int number) = 0;
-    bool runTask(Task* task, const char* label);   // true if the task ended Completed
+    /**
+     * @brief Runs the task; returns true if the task ended Completed.
+     */
+    bool runTask(Task* task, const char* label);
 public:
     explicit Handler(Command* c = nullptr);
     virtual ~Handler();
