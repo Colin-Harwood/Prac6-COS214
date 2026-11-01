@@ -3,7 +3,13 @@
 #include "TaskState.h"
 #include "PendingState.h"
 #include <algorithm>
-
+/**
+ * @file Task.cpp
+ * @brief Base Component of the Composite pattern for tasks.
+ *
+ * Holds task data, the current State (Pending, etc.), registered Observers
+ * and Memento-style restore support.
+ */
 Task::Task(const std::string& name, const std::string& deadline): name(name), deadline(deadline), deptLevel(parseDeptLevel(name)),isComplete(false), state(new PendingState()) {}
 Task::~Task() { delete state; }
 

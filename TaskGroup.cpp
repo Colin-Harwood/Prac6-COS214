@@ -1,7 +1,13 @@
 #include "TaskGroup.h"
 #include "DepartmentTaskIterator.h"
 #include <algorithm>
-
+/**
+ * @file TaskGroup.cpp
+ * @brief Composite node that holds child tasks.
+ *
+ * Treats groups and leaves uniformly, supports deep-copy cloning (Prototype)
+ * and creates a DepartmentTaskIterator (Iterator).
+ */
 TaskGroup::TaskGroup(const std::string& name, const std::string& deadline):Task(name, deadline) {}
 TaskGroup::~TaskGroup(){
     for (Task* child : children){

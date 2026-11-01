@@ -5,6 +5,13 @@
 #include "TaskIterator.h"
 #include "TimeoutMonitor.h"
 #include <iostream>
+/**
+ * @file ConcreteHandlerA.cpp
+ * @brief Chain of Responsibility handler for categories 1-3.
+ *
+ * Iterates over matching subtasks, attaches a TimeoutMonitor to each,
+ * runs the command and logs once all subtasks are completed.
+ */
 
 ConcreteHandlerA::ConcreteHandlerA(Command* c) : Handler(c) {
     minLeaf = 1;

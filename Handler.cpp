@@ -5,7 +5,13 @@
 #include "TaskIterator.h"
 #include <iostream>
 #include <exception>
-
+/**
+ * @file Handler.cpp
+ * @brief Base handler of the Chain of Responsibility.
+ *
+ * Handles a task if its category is in range, otherwise passes it to the
+ * next handler. Also provides runTask() to execute a command safely.
+ */
 
 Handler::Handler(Command* c): next(nullptr), minLeaf(0), maxLeaf(0), command(c), logcommand(nullptr) {}
 Handler::~Handler(){}
