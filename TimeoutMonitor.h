@@ -10,7 +10,7 @@
 #include <chrono>
 #include <condition_variable>
 
-class TimeoutMonitor {
+class TimeoutMonitor : public Observer{
 private:
     using Clock = std::chrono::steady_clock;
     Task* task;
